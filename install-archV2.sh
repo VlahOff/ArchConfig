@@ -231,35 +231,35 @@ sudo pacman -S --needed flatpak
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 apps=(
-  "flathub com.belmoussaoui.Authenticator"
-  "flathub org.blender.Blender"
-  "flathub org.gnome.Calendar"
-  "flathub com.discordapp.Discord"
-  "flathub org.mozilla.firefox"
-  "flathub com.github.tchx84.Flatseal"
-  "flathub io.github.shiftey.Desktop"
-  "flathub org.gimp.GIMP"
-  "flathub com.google.Chrome"
-  "flathub org.gnome.gThumb"
-  "flathub fr.handbrake.ghb"
-  "flathub rest.insomnia.Insomnia"
-  "flathub org.gnome.meld"
-  "flathub com.microsoft.Edge"
-  "flathub io.missioncenter.MissionCenter"
-  "flathub com.mongodb.Compass"
-  "flathub org.onlyoffice.desktopeditors"
-  "flathub com.github.PintaProject.Pinta"
-  "flathub net.davidotek.pupgui2"
-  "flathub com.rustdesk.RustDesk"
-  "flathub com.spotify.Client"
-  "flathub com.transmissionbt.Transmission"
-  "flathub org.videolan.VLC"
-  "flathub org.pulseaudio.pavucontrol"
-  "flathub org.gnome.Loupe"
-  "flathub org.gtk.Gtk3theme.Adwaita-dark"
-  "flathub io.github.flattool.Warehouse"
-  "flathub org.flathub.flatpak-external-data-checker"
-  "flathub it.mijorus.gearlever"
+  com.belmoussaoui.Authenticator
+  org.blender.Blender
+  org.gnome.Calendar
+  com.discordapp.Discord
+  org.mozilla.firefox
+  com.github.tchx84.Flatseal
+  io.github.shiftey.Desktop
+  org.gimp.GIMP
+  com.google.Chrome
+  org.gnome.gThumb
+  fr.handbrake.ghb
+  rest.insomnia.Insomnia
+  org.gnome.meld
+  com.microsoft.Edge
+  io.missioncenter.MissionCenter
+  com.mongodb.Compass
+  org.onlyoffice.desktopeditors
+  com.github.PintaProject.Pinta
+  net.davidotek.pupgui2
+  com.rustdesk.RustDesk
+  com.spotify.Client
+  com.transmissionbt.Transmission
+  org.videolan.VLC
+  org.pulseaudio.pavucontrol
+  org.gnome.Loupe
+  org.gtk.Gtk3theme.Adwaita-dark
+  io.github.flattool.Warehouse
+  org.flathub.flatpak-external-data-checker
+  it.mijorus.gearlever
 )
 
 flatpak install -y --noninteractive flathub "${apps[@]}"
