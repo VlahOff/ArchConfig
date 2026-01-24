@@ -262,4 +262,4 @@ apps=(
   it.mijorus.gearlever
 )
 
-flatpak install -y --noninteractive flathub "${apps[@]}"
+flatpak install -y flathub "${apps[@]}"
