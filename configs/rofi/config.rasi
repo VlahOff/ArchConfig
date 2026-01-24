@@ -1,0 +1,19 @@
+@theme "/home/vlahoff/.config/rofi/themes/rounded-gray-dark.rasi"
+
+configuration {
+  show-icons: true;
+  hover-select: true;
+  steal-focus: true;
+  show-icons: true;
+  case-sensitive: false;
+  matching: 'regex';
+  auto-select: true;
+}
+
+element-icon {
+  size: 40px;
+}
+
+element {
+  padding: 6px 10px;
+}

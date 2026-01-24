@@ -1,0 +1,36 @@
+{
+    "label": "shutdown",
+    "action": "systemctl poweroff",
+    "keybind": "s",
+    "text": "Shutdown"
+}
+{
+    "label": "lock",
+    "action": "hyprlock & sleep 1 hyprctl dispatch dpms off",
+    "keybind": "l",
+    "text": "Lock"
+}
+{
+    "label": "reboot",
+    "action": "systemctl reboot",
+    "keybind": "r",
+    "text": "Reboot"
+}
+{
+    "label": "sleep",
+    "action": "systemctl suspend",
+    "keybind": "h",
+    "text": "Sleep"
+}
+{
+    "label": "logout",
+    "action": "loginctl kill-session $XDG_SESSION_ID",
+    "keybind": "e",
+    "text": "Logout"
+}
+{
+    "label": "hibernate",
+    "action": "swaylock -f",
+    "keybind": "l",
+    "text": "Hibernate"
+}
