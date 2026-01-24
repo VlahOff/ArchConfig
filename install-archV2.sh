@@ -122,6 +122,8 @@ done
 # ---------- main ----------
 enable_multilib
 
+sudo pacman -Rs snapshot gnome-connections gnome-maps decibels gnome-contacts showtime gnome-music dolphin gnome-weather epiphany gnome-software
+
 # Full system upgrade (refresh db + upgrade)
 sudo pacman -Syu
 
