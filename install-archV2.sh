@@ -190,7 +190,6 @@ repo_pkgs=(
   vulkan-tools
   mesa-demos
   gamemode
-  vi
   neovim
   cronie
   man-db
