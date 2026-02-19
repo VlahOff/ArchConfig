@@ -194,6 +194,7 @@ repo_pkgs=(
   cronie
   man-db
   man-pages
+  rocm-smi-lib
 )
 
 pacman_install_existing_only "${repo_pkgs[@]}"
