@@ -6,7 +6,7 @@
 }
 {
     "label": "lock",
-    "action": "hyprlock & sleep 1 hyprctl dispatch dpms off",
+    "action": "hyprlock & sleep 1 && hyprctl dispatch dpms off",
     "keybind": "l",
     "text": "Lock"
 }
