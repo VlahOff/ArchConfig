@@ -20,10 +20,10 @@
         "disk#3",
         "pulseaudio",
         "hyprland/language",
+        "battery",
         "idle_inhibitor",
         "tray",
         "custom/wlogout"
-        // "battery",
     ],
     // Modules configuration
     "hyprland/workspaces": {
