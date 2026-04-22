@@ -100,7 +100,7 @@ config_items=(
 )
 
 for item in "${config_items[@]}"; do
-  SRC="$SCRIPT_DIR/configs/$item"
+  SRC="$SCRIPT_DIR/configs-laptop/$item"
   DST="$CONFIG_DIR/$item"
 
   # Skip if source doesn't exist
@@ -193,8 +193,9 @@ repo_pkgs=(
   cronie
   man-db
   man-pages
-  amdsmi
-  rocm-smi-lib
+  vulkan-intel
+  intel-media-driver
+  lib32-vulkan-intel
 )
 
 pacman_install_existing_only "${repo_pkgs[@]}"

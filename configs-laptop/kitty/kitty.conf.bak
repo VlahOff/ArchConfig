@@ -1,0 +1,14 @@
+font_family       MesloLGS NF
+bold_font         MesloLGS NF Bold
+italic_font       MesloLGS NF Italic
+bold_italic_font  MesloLGS NF Bold Italic
+font_size 11.0
+
+cursor_shape block
+cursor_shape_unfocused hollow
+
+scrollback_lines 6000
+
+background_opacity 0.4
+
+confirm_os_window_close 0
