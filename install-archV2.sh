@@ -180,7 +180,6 @@ repo_pkgs=(
   steam
   github-cli
   timeshift
-  amdsmi
   bleachbit
   flatpak
   networkmanager
@@ -194,7 +193,11 @@ repo_pkgs=(
   cronie
   man-db
   man-pages
+  amdsmi
   rocm-smi-lib
+  vulkan-intel
+  intel-media-driver
+  lib32-vulkan-intel
 )
 
 pacman_install_existing_only "${repo_pkgs[@]}"
