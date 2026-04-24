@@ -234,37 +234,39 @@ sudo pacman -S --needed flatpak
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 apps=(
-  com.anydesk.Anydesk
   app.zen_browser.zen
+  com.anydesk.Anydesk
   com.belmoussaoui.Authenticator
-  org.blender.Blender
-  org.gnome.Calendar
   com.discordapp.Discord
-  org.mozilla.firefox
-  com.github.tchx84.Flatseal
-  io.github.shiftey.Desktop
-  org.gimp.GIMP
-  com.google.Chrome
-  org.gnome.gThumb
-  fr.handbrake.ghb
-  rest.insomnia.Insomnia
-  org.gnome.meld
-  com.microsoft.Edge
-  io.missioncenter.MissionCenter
-  com.mongodb.Compass
-  org.onlyoffice.desktopeditors
   com.github.PintaProject.Pinta
-  net.davidotek.pupgui2
+  com.github.tchx84.Flatseal
+  com.google.Chrome
+  com.microsoft.Edge
+  com.mongodb.Compass
   com.rustdesk.RustDesk
   com.spotify.Client
   com.transmissionbt.Transmission
-  org.videolan.VLC
-  org.pulseaudio.pavucontrol
-  org.gnome.Loupe
-  org.gtk.Gtk3theme.Adwaita-dark
+  com.viber.Viber
+  fr.handbrake.ghb
   io.github.flattool.Warehouse
-  org.flathub.flatpak-external-data-checker
+  io.github.shiftey.Desktop
+  io.missioncenter.MissionCenter
   it.mijorus.gearlever
+  net.davidotek.pupgui2
+  org.blender.Blender
+  org.flathub.flatpak-external-data-checker
+  org.gimp.GIMP
+  org.gnome.Calendar
+  org.gnome.gThumb
+  org.gnome.Loupe
+  org.gnome.meld
+  org.gtk.Gtk3theme.Adwaita-dark
+  org.mozilla.firefox
+  org.onlyoffice.desktopeditors
+  org.pulseaudio.pavucontrol
+  org.videolan.VLC
+  rest.insomnia.Insomnia
+  tv.plex.PlexDesktop
 )
 
 flatpak install -y flathub "${apps[@]}"
