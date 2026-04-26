@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE_DIR="/home/vlahoff/Pictures/carPics"
+IMAGE_DIR="/home/vlahoff/Pictures/space"
 INTERVAL=600
 
 command -v hyprpaper >/dev/null 2>&1 || { echo "Error: hyprpaper not found"; exit 1; }
