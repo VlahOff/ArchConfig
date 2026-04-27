@@ -7,6 +7,13 @@ USER_HOME=$(eval echo "~$ORIGINAL_USER")
 # ---------- helpers ----------
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
 
+prompt_yes_no() {
+  local prompt_message="$1"
+  local response
+  read -rp "$prompt_message (y/n): " response
+  [[ "$response" =~ ^[Yy]$ ]]
+}
+
 enable_multilib() {
   # Uncomment [multilib] and the following Include line in /etc/pacman.conf
   if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
@@ -99,8 +106,16 @@ config_items=(
   wlogout
 )
 
+if prompt_yes_no "Do you want to install PC or Laptop configs (y=PC | n=Laptop)"; then
+  echo "Copying PC configs..."
+  CONFIG_SRC_DIR="$SCRIPT_DIR/configs"
+else
+  echo "Copying laptop configs..."
+  CONFIG_SRC_DIR="$SCRIPT_DIR/configs-laptop"
+fi
+
 for item in "${config_items[@]}"; do
-  SRC="$SCRIPT_DIR/configs/$item"
+  SRC="$CONFIG_SRC_DIR/$item"
   DST="$CONFIG_DIR/$item"
 
   # Skip if source doesn't exist
@@ -129,6 +144,7 @@ sudo pacman -Syu
 
 # Repo packages (skip anything that isn't in official repos)
 repo_pkgs=(
+  ufw
   virt-manager
   virt-viewer
   qemu-full
@@ -193,11 +209,27 @@ repo_pkgs=(
   cronie
   man-db
   man-pages
+)
+
+amd_pkgs=(
   amdsmi
   rocm-smi-lib
 )
+intel_pkgs=(
+  vulkan-intel
+  intel-media-driver
+  lib32-vulkan-intel
+)
 
 pacman_install_existing_only "${repo_pkgs[@]}"
+
+if prompt_yes_no "Do you want to install AMD or Intel Graphics drivers (y=amd | n=intel)"; then
+  echo "Installing AMD Graphics drivers..."
+  pacman_install_existing_only "${amd_pkgs[@]}"
+else
+  echo "Installing Intel Graphics drivers..."
+  pacman_install_existing_only "${intel_pkgs[@]}"
+fi
 
 # Services
 sudo systemctl enable --now NetworkManager || true
@@ -215,6 +247,14 @@ sudo virsh net-start default || true
 sudo usermod -aG kvm "$USER" || true
 sudo usermod -aG libvirt "$USER" || true
 sudo usermod -aG docker "$USER" || true
+
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+sudo systemctl enable --now ufw.service
 
 # AUR packages
 install_yay_if_missing
