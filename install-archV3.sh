@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ORIGINAL_USER=$(logname)
-USER_HOME=$(eval echo "~$ORIGINAL_USER")
+USER_HOME="$(realpath -m ~/${ORIGINAL_USER})" 
 
 # ---------- helpers ----------
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
