@@ -106,6 +106,8 @@ config_items=(
   wlogout
 )
 
+CONFIG_SRC_DIR=""
+
 if prompt_yes_no "Do you want to install PC or Laptop configs (y=PC | n=Laptop)"; then
   echo "Copying PC configs..."
   CONFIG_SRC_DIR="$SCRIPT_DIR/configs"
