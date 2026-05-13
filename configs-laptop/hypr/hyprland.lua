@@ -2,15 +2,9 @@
 --  MONITORS  --
 ----------------
 hl.monitor({
-    output = "DP-1",
-    mode = "3440x1440@180",
+    output = "eDP-1",
+    mode = "1920x1080@60",
     position = "0x0",
-    scale = 1
-})
-hl.monitor({
-    output = "DP-2",
-    mode = "1920x1080@75",
-    position = "-1920x0",
     scale = 1
 })
 
@@ -370,6 +364,17 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), {
     mouse = true
 })
 
+-- Brightness control
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -d intel_backlight s +5%"), {
+    locked = true,
+    repeating = true
+})
+
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -d intel_backlight s 5%-"), {
+    locked = true,
+    repeating = true
+})
+
 -- Audio controls.
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("pactl set-sink-volume @DEFAULT_SINK@ +5%"), {
     repeating = true
@@ -471,8 +476,12 @@ hl.window_rule({
     opacity = "0.8 0.8"
 })
 
-hl.workspace_rule({
-    workspace = "10",
-    monitor = "DP-2",
-    default = true
+-------------
+-- GESTURES
+-------------
+
+hl.gesture({
+    fingers = 3,
+    direction = "horizontal",
+    action = "workspace"
 })
