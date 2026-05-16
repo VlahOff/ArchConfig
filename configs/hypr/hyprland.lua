@@ -29,6 +29,7 @@ local mainMod = "SUPER"
 
 local function restart_waybar()
     hl.exec_cmd("pkill waybar; waybar")
+    hl.exec_cmd("~/.config/hypr/new_wallpaper_changer.sh")
 end
 
 hl.on("hyprland.start", function()
@@ -40,7 +41,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     hl.exec_cmd("nm-applet")
     hl.exec_cmd("wl-paste -t text --watch clipman store --no-persist")
-    hl.exec_cmd("~/.config/hypr/new_wallpaper_changer.sh")
 end)
 
 -- Preserve old `exec =` behavior: restart Waybar after config reloads too.
