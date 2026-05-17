@@ -90,8 +90,6 @@ hl.config({
         enabled = true
     },
     dwindle = {
-        force_split = 3,
-        smart_split = true,
         preserve_split = true
     },
     master = {
