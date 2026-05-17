@@ -71,7 +71,6 @@ hl.config({
         resize_on_border = true,
         allow_tearing = false
     },
-
     decoration = {
         rounding = 8,
         blur = {
@@ -87,26 +86,23 @@ hl.config({
             color = "rgba(1a1a1aee)"
         }
     },
-
     animations = {
         enabled = true
     },
-
     dwindle = {
+        force_split = 3,
+        smart_split = true,
         preserve_split = true
     },
-
     master = {
         new_status = "master"
     },
-
     scrolling = {
         fullscreen_on_one_column = true,
         column_width = 0.5,
         direction = "right",
         focus_fit_method = 1
     },
-
     misc = {
         force_default_wallpaper = 0,
         mouse_move_enables_dpms = true,
