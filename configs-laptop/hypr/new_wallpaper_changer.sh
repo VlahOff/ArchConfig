@@ -137,13 +137,14 @@ while true; do
   fi
 
   for img in "${shuffled[@]}"; do
-    # Optional preload (some setups prefer it)
-    hyprctl hyprpaper preload "$img" >/dev/null 2>&1 || true
+  hyprctl hyprpaper preload "$img" >/dev/null 2>&1 || true
 
-    for m in "${MONITORS[@]}"; do
-      hyprctl hyprpaper wallpaper "${m},${img},cover"
-    done
-
-    sleep "$INTERVAL"
+  for m in "${MONITORS[@]}"; do
+    hyprctl hyprpaper wallpaper "${m},${img}"
   done
+
+  hyprctl hyprpaper unload unused >/dev/null 2>&1 || true
+
+  sleep "$INTERVAL"
+done
 done
