@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Do not run this script with sudo.
-# The script itself uses sudo where needed.
+# Run this script as your normal user, not with sudo.
+# The script uses sudo only where needed.
 if [[ "$EUID" -eq 0 ]]; then
   echo "❌ Run this script as your normal user, not with sudo."
   echo "Example: ./install.sh"
   exit 1
 fi
 
-ORIGINAL_USER="${SUDO_USER:-$USER}"
+ORIGINAL_USER="$USER"
 USER_HOME="$(getent passwd "$ORIGINAL_USER" | cut -d: -f6)"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
@@ -26,8 +26,22 @@ need_cmd() {
 prompt_yes_no() {
   local prompt_message="$1"
   local response
-  read -rp "$prompt_message (y/n): " response
-  [[ "$response" =~ ^[Yy]$ ]]
+
+  while true; do
+    read -rp "$prompt_message (y/n): " response
+
+    case "$response" in
+      [Yy])
+        return 0
+        ;;
+      [Nn])
+        return 1
+        ;;
+      *)
+        echo "Please answer y or n."
+        ;;
+    esac
+  done
 }
 
 copy_dir_contents() {
@@ -35,8 +49,8 @@ copy_dir_contents() {
   local dst="$2"
 
   if [[ -d "$src" ]]; then
-    sudo -u "$ORIGINAL_USER" mkdir -p "$dst"
-    sudo -u "$ORIGINAL_USER" cp -a "$src"/. "$dst"/
+    mkdir -p "$dst"
+    cp -a "$src"/. "$dst"/
   fi
 }
 
@@ -113,6 +127,7 @@ install_yay_if_missing() {
   tmpdir="$(mktemp -d)"
 
   git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
+
   (
     cd "$tmpdir/yay"
     makepkg -si
@@ -127,13 +142,13 @@ copy_dir_contents "$SCRIPT_DIR/.icons" "$USER_HOME/.icons"
 copy_dir_contents "$SCRIPT_DIR/carPics" "$USER_HOME/Pictures/carPics"
 
 for dir in ".fonts" ".icons" "Code"; do
-  sudo -u "$ORIGINAL_USER" mkdir -p "$USER_HOME/$dir"
+  mkdir -p "$USER_HOME/$dir"
 done
 
 # ---------- config symlinks ----------
 CONFIG_DIR="$USER_HOME/.config"
 
-sudo -u "$ORIGINAL_USER" mkdir -p "$CONFIG_DIR"
+mkdir -p "$CONFIG_DIR"
 
 config_items=(
   bleachbit
@@ -173,11 +188,14 @@ for item in "${config_items[@]}"; do
 
   echo "Replacing $DST with symlink to $SRC"
 
+  # Delete existing directory, file, or symlink in ~/.config
   if [[ -e "$DST" || -L "$DST" ]]; then
     sudo rm -rf -- "$DST"
   fi
 
-  sudo -u "$ORIGINAL_USER" ln -s -- "$SRC" "$DST"
+  # Create new symlink
+  ln -s -- "$SRC" "$DST"
+
   echo "✔ Linked $item"
 done
 
@@ -302,7 +320,7 @@ sudo systemctl enable --now cronie.service
 sudo virsh net-autostart default || true
 sudo virsh net-start default || true
 
-# Groups - re-login required after this
+# Groups - log out and back in after this
 sudo usermod -aG kvm "$ORIGINAL_USER" || true
 sudo usermod -aG libvirt "$ORIGINAL_USER" || true
 sudo usermod -aG docker "$ORIGINAL_USER" || true
@@ -357,7 +375,7 @@ apps2=(
   com.google.Chrome
   com.microsoft.Edge
   com.mongodb.Compass
-  com.rustDesk.RustDesk
+  com.rustdesk.RustDesk
   com.spotify.Client
   com.transmissionbt.Transmission
   com.viber.Viber
@@ -380,4 +398,4 @@ else
 fi
 
 echo "Done."
-echo "You should reboot or log out and back in so group changes take effect."
+echo "Log out and back in, or reboot, so group changes take effect."
