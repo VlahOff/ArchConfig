@@ -188,18 +188,25 @@ for item in "${config_items[@]}"; do
 
   echo "Replacing $DST with symlink to $SRC"
 
-  # Delete existing directory, file, or symlink
+  # Remove existing file, dir, or symlink
   if [[ -e "$DST" || -L "$DST" ]]; then
     sudo rm -rf -- "$DST"
   fi
 
-  # Safety check: if it still exists, stop
+  # If it still exists, move it out of the way
   if [[ -e "$DST" || -L "$DST" ]]; then
-    echo "❌ Failed to remove existing path: $DST"
+    BACKUP="${DST}.backup.$(date +%Y%m%d-%H%M%S)"
+    echo "⚠ Could not delete $DST, moving it to $BACKUP"
+    sudo mv -- "$DST" "$BACKUP"
+  fi
+
+  # Final safety check
+  if [[ -e "$DST" || -L "$DST" ]]; then
+    echo "❌ Failed to remove or move existing path: $DST"
     exit 1
   fi
 
-  # -T means: treat DST as the link itself, not as a directory
+  # -T prevents linking inside an existing directory
   ln -sT -- "$SRC" "$DST"
 
   echo "✔ Linked $item"
