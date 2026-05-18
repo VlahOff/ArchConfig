@@ -84,14 +84,14 @@ for dir in ".fonts" ".icons" "Code"; do
   sudo -u "$ORIGINAL_USER" mkdir -p "$USER_HOME/$dir"
 done
 
-# Determine real script dir (so $SCRIPT_DIR is absolute)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Determine real user and home
+ORIGINAL_USER="${SUDO_USER:-$USER}"
+USER_HOME="$(getent passwd "$ORIGINAL_USER" | cut -d: -f6)"
+
+# Determine real script dir
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 CONFIG_DIR="$USER_HOME/.config"
 
-# Ensure target config directory exists
-sudo -u "$ORIGINAL_USER" mkdir -p "$CONFIG_DIR"
-
-# List of config folders you want to link
 config_items=(
   bleachbit
   btop
@@ -106,34 +106,56 @@ config_items=(
   wlogout
 )
 
-CONFIG_SRC_DIR=""
-
 if prompt_yes_no "Do you want to install PC or Laptop configs (y=PC | n=Laptop)"; then
-  echo "Copying PC configs..."
+  echo "Linking PC configs..."
   CONFIG_SRC_DIR="$SCRIPT_DIR/configs"
 else
-  echo "Copying laptop configs..."
+  echo "Linking laptop configs..."
   CONFIG_SRC_DIR="$SCRIPT_DIR/configs-laptop"
 fi
+
+echo "ORIGINAL_USER=$ORIGINAL_USER"
+echo "USER_HOME=$USER_HOME"
+echo "SCRIPT_DIR=$SCRIPT_DIR"
+echo "CONFIG_SRC_DIR=$CONFIG_SRC_DIR"
+echo "CONFIG_DIR=$CONFIG_DIR"
+
+if [[ -z "$ORIGINAL_USER" || -z "$USER_HOME" ]]; then
+  echo "❌ Could not determine original user/home."
+  exit 1
+fi
+
+if [[ ! -d "$CONFIG_SRC_DIR" ]]; then
+  echo "❌ Config source directory not found: $CONFIG_SRC_DIR"
+  exit 1
+fi
+
+sudo -u "$ORIGINAL_USER" mkdir -p "$CONFIG_DIR"
 
 for item in "${config_items[@]}"; do
   SRC="$CONFIG_SRC_DIR/$item"
   DST="$CONFIG_DIR/$item"
 
-  # Skip if source doesn't exist
   if [[ ! -e "$SRC" ]]; then
     echo "⚠ Source not found: $SRC, skipping."
     continue
   fi
 
-  # Remove any existing file, dir, or symlink at DST
+  echo "Linking:"
+  echo "  SRC=$SRC"
+  echo "  DST=$DST"
+
+  # Remove existing file/dir/symlink as root, because it may be root-owned
   if [[ -e "$DST" || -L "$DST" ]]; then
-    sudo -u "$ORIGINAL_USER" rm -rf "$DST"
+    sudo rm -rf -- "$DST"
   fi
 
-  # Create the symlink
-  sudo -u "$ORIGINAL_USER" ln -s "$SRC" "$DST"
-  echo "✔ Linked $item"
+  # Create symlink as the normal user
+  if sudo -u "$ORIGINAL_USER" ln -s -- "$SRC" "$DST"; then
+    echo "✔ Linked $item"
+  else
+    echo "❌ Failed to link $item"
+  fi
 done
 
 # ---------- main ----------
