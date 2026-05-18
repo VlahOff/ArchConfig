@@ -1,11 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ORIGINAL_USER=$(logname)
-USER_HOME="$(realpath -m ~/${ORIGINAL_USER})" 
+# Do not run this script with sudo.
+# The script itself uses sudo where needed.
+if [[ "$EUID" -eq 0 ]]; then
+  echo "❌ Run this script as your normal user, not with sudo."
+  echo "Example: ./install.sh"
+  exit 1
+fi
+
+ORIGINAL_USER="${SUDO_USER:-$USER}"
+USER_HOME="$(getent passwd "$ORIGINAL_USER" | cut -d: -f6)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
+if [[ -z "$USER_HOME" || ! -d "$USER_HOME" ]]; then
+  echo "❌ Could not determine home directory for user: $ORIGINAL_USER"
+  exit 1
+fi
 
 # ---------- helpers ----------
-need_cmd() { command -v "$1" >/dev/null 2>&1; }
+need_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
 
 prompt_yes_no() {
   local prompt_message="$1"
@@ -14,19 +30,33 @@ prompt_yes_no() {
   [[ "$response" =~ ^[Yy]$ ]]
 }
 
+copy_dir_contents() {
+  local src="$1"
+  local dst="$2"
+
+  if [[ -d "$src" ]]; then
+    sudo -u "$ORIGINAL_USER" mkdir -p "$dst"
+    sudo -u "$ORIGINAL_USER" cp -a "$src"/. "$dst"/
+  fi
+}
+
 enable_multilib() {
-  # Uncomment [multilib] and the following Include line in /etc/pacman.conf
-  if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
-    echo "No [multilib] section found in /etc/pacman.conf (unexpected). Skipping."
+  if grep -q '^[[:space:]]*\[multilib\]' /etc/pacman.conf; then
+    echo "multilib already appears to be enabled."
     return 0
   fi
 
-  if grep -q '^\s*#\s*\[multilib\]' /etc/pacman.conf; then
+  if grep -q '^[[:space:]]*#[[:space:]]*\[multilib\]' /etc/pacman.conf; then
     echo "Enabling multilib in /etc/pacman.conf..."
+
     sudo sed -i \
-      -e 's/^\s*#\s*\[multilib\]/[multilib]/' \
-      -e 's/^\s*#\s*Include = \/etc\/pacman\.d\/mirrorlist/Include = \/etc\/pacman.d\/mirrorlist/' \
+      '/^[[:space:]]*#[[:space:]]*\[multilib\]/,/^[[:space:]]*#[[:space:]]*Include = \/etc\/pacman.d\/mirrorlist/{
+        s/^[[:space:]]*#[[:space:]]*\[multilib\]/[multilib]/
+        s/^[[:space:]]*#[[:space:]]*Include = \/etc\/pacman\.d\/mirrorlist/Include = \/etc\/pacman.d\/mirrorlist/
+      }' \
       /etc/pacman.conf
+  else
+    echo "No [multilib] section found in /etc/pacman.conf. Skipping."
   fi
 }
 
@@ -48,9 +78,26 @@ pacman_install_existing_only() {
   fi
 
   if ((${#missing[@]})); then
-    echo "These packages were NOT found in official repos (skipped):"
+    echo "These packages were NOT found in official repos and were skipped:"
     printf '  - %s\n' "${missing[@]}"
-    echo "If you expected them, they may be AUR packages or named differently on Arch."
+    echo "They may be AUR packages or named differently on Arch."
+  fi
+}
+
+pacman_remove_installed_only() {
+  local -a pkgs=("$@")
+  local -a remove=()
+
+  for p in "${pkgs[@]}"; do
+    if pacman -Q "$p" >/dev/null 2>&1; then
+      remove+=("$p")
+    fi
+  done
+
+  if ((${#remove[@]})); then
+    sudo pacman -Rs "${remove[@]}"
+  else
+    echo "No listed packages are installed. Nothing to remove."
   fi
 }
 
@@ -58,41 +105,34 @@ install_yay_if_missing() {
   if need_cmd yay; then
     return 0
   fi
-  echo "Installing yay (AUR helper)..."
+
+  echo "Installing yay AUR helper..."
   sudo pacman -S --needed base-devel git
 
+  local tmpdir
   tmpdir="$(mktemp -d)"
-  trap 'rm -rf "$tmpdir"' EXIT
+
   git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
-  (cd "$tmpdir/yay" && makepkg -si --noconfirm)
+  (
+    cd "$tmpdir/yay"
+    makepkg -si
+  )
+
+  rm -rf "$tmpdir"
 }
 
-[[ -d "./.fonts" ]] \
-  && sudo -u "$ORIGINAL_USER" mkdir -p "$USER_HOME/.fonts" \
-  && sudo -u "$ORIGINAL_USER" cp ./.fonts/* "$USER_HOME/.fonts"
+# ---------- user folders / files ----------
+copy_dir_contents "$SCRIPT_DIR/.fonts" "$USER_HOME/.fonts"
+copy_dir_contents "$SCRIPT_DIR/.icons" "$USER_HOME/.icons"
+copy_dir_contents "$SCRIPT_DIR/carPics" "$USER_HOME/Pictures/carPics"
 
-[[ -d "./.icons" ]] \
-  && sudo -u "$ORIGINAL_USER" mkdir -p "$USER_HOME/.icons" \
-  && sudo -u "$ORIGINAL_USER" cp -r ./.icons/* "$USER_HOME/.icons"
-
-[[ -d "./carPics" ]] \
-  && sudo -u "$ORIGINAL_USER" mkdir -p "$USER_HOME/Pictures/carPics" \
-  && sudo -u "$ORIGINAL_USER" cp -r ./carPics/* "$USER_HOME/Pictures/carPics"
-
-# Create required user directories in a loop
 for dir in ".fonts" ".icons" "Code"; do
   sudo -u "$ORIGINAL_USER" mkdir -p "$USER_HOME/$dir"
 done
 
-# Determine real user and home
-ORIGINAL_USER="${SUDO_USER:-$USER}"
-USER_HOME="$(getent passwd "$ORIGINAL_USER" | cut -d: -f6)"
-
-# Determine real script dir
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+# ---------- config symlinks ----------
 CONFIG_DIR="$USER_HOME/.config"
 
-# Ensure target config directory exists
 sudo -u "$ORIGINAL_USER" mkdir -p "$CONFIG_DIR"
 
 config_items=(
@@ -117,7 +157,6 @@ else
   CONFIG_SRC_DIR="$SCRIPT_DIR/configs-laptop"
 fi
 
-# Check selected config source exists
 if [[ ! -d "$CONFIG_SRC_DIR" ]]; then
   echo "❌ Config source directory not found: $CONFIG_SRC_DIR"
   exit 1
@@ -127,7 +166,6 @@ for item in "${config_items[@]}"; do
   SRC="$CONFIG_SRC_DIR/$item"
   DST="$CONFIG_DIR/$item"
 
-  # Skip missing source configs
   if [[ ! -e "$SRC" ]]; then
     echo "⚠ Source not found: $SRC, skipping."
     continue
@@ -135,28 +173,34 @@ for item in "${config_items[@]}"; do
 
   echo "Replacing $DST with symlink to $SRC"
 
-  # Remove existing file, directory, or symlink
   if [[ -e "$DST" || -L "$DST" ]]; then
     sudo rm -rf -- "$DST"
   fi
 
-  # Create symlink as the real user
-  if sudo -u "$ORIGINAL_USER" ln -s -- "$SRC" "$DST"; then
-    echo "✔ Linked $item"
-  else
-    echo "❌ Failed to link $item"
-  fi
+  sudo -u "$ORIGINAL_USER" ln -s -- "$SRC" "$DST"
+  echo "✔ Linked $item"
 done
 
 # ---------- main ----------
 enable_multilib
 
-sudo pacman -Rs snapshot gnome-connections gnome-maps decibels gnome-contacts showtime gnome-music dolphin gnome-weather epiphany gnome-software
+pacman_remove_installed_only \
+  snapshot \
+  gnome-connections \
+  gnome-maps \
+  decibels \
+  gnome-contacts \
+  showtime \
+  gnome-music \
+  dolphin \
+  gnome-weather \
+  epiphany \
+  gnome-software
 
-# Full system upgrade (refresh db + upgrade)
+# Full system upgrade
 sudo pacman -Syu
 
-# Repo packages (skip anything that isn't in official repos)
+# Repo packages
 repo_pkgs=(
   ufw
   virt-manager
@@ -229,6 +273,7 @@ amd_pkgs=(
   amdsmi
   rocm-smi-lib
 )
+
 intel_pkgs=(
   vulkan-intel
   intel-media-driver
@@ -245,7 +290,7 @@ else
   pacman_install_existing_only "${intel_pkgs[@]}"
 fi
 
-# Services
+# ---------- services ----------
 sudo systemctl enable --now NetworkManager || true
 sudo systemctl enable --now libvirtd
 sudo systemctl enable --now docker
@@ -257,11 +302,12 @@ sudo systemctl enable --now cronie.service
 sudo virsh net-autostart default || true
 sudo virsh net-start default || true
 
-# Groups (re-login required after this)
-sudo usermod -aG kvm "$USER" || true
-sudo usermod -aG libvirt "$USER" || true
-sudo usermod -aG docker "$USER" || true
+# Groups - re-login required after this
+sudo usermod -aG kvm "$ORIGINAL_USER" || true
+sudo usermod -aG libvirt "$ORIGINAL_USER" || true
+sudo usermod -aG docker "$ORIGINAL_USER" || true
 
+# Firewall
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow 22/tcp
@@ -270,7 +316,7 @@ sudo ufw allow 443/tcp
 sudo ufw enable
 sudo systemctl enable --now ufw.service
 
-# AUR packages
+# ---------- AUR packages ----------
 install_yay_if_missing
 
 aur_pkgs=(
@@ -282,9 +328,9 @@ aur_pkgs=(
 
 yay -Syu --needed "${aur_pkgs[@]}"
 
-# Flatpak
+# ---------- Flatpak ----------
 sudo pacman -S --needed flatpak
-flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 apps=(
   com.github.PintaProject.Pinta
@@ -311,7 +357,7 @@ apps2=(
   com.google.Chrome
   com.microsoft.Edge
   com.mongodb.Compass
-  com.rustdesk.RustDesk
+  com.rustDesk.RustDesk
   com.spotify.Client
   com.transmissionbt.Transmission
   com.viber.Viber
@@ -326,9 +372,12 @@ apps2=(
 )
 
 if prompt_yes_no "Do you want to install full or minimal flatpaks (y=full | n=minimal)"; then
-  echo "Installing full..."
+  echo "Installing full Flatpaks..."
   flatpak install -y flathub "${apps[@]}" "${apps2[@]}"
 else
-  echo "Installing minimal..."
+  echo "Installing minimal Flatpaks..."
   flatpak install -y flathub "${apps[@]}"
 fi
+
+echo "Done."
+echo "You should reboot or log out and back in so group changes take effect."
