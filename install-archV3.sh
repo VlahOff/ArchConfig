@@ -275,12 +275,27 @@ sudo pacman -S --needed flatpak
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 apps=(
-  app.zen_browser.zen
-  com.anydesk.Anydesk
-  com.belmoussaoui.Authenticator
-  com.discordapp.Discord
   com.github.PintaProject.Pinta
   com.github.tchx84.Flatseal
+  io.github.flattool.Warehouse
+  io.github.shiftey.Desktop
+  it.mijorus.gearlever
+  org.flathub.flatpak-external-data-checker
+  org.gnome.Calendar
+  org.gnome.Loupe
+  org.gnome.meld
+  org.gtk.Gtk3theme.Adwaita-dark
+  org.mozilla.firefox
+  org.onlyoffice.desktopeditors
+  org.pulseaudio.pavucontrol
+  org.videolan.VLC
+)
+
+apps2=(
+  com.discordapp.Discord
+  com.belmoussaoui.Authenticator
+  app.zen_browser.zen
+  com.anydesk.Anydesk
   com.google.Chrome
   com.microsoft.Edge
   com.mongodb.Compass
@@ -289,25 +304,19 @@ apps=(
   com.transmissionbt.Transmission
   com.viber.Viber
   fr.handbrake.ghb
-  io.github.flattool.Warehouse
-  io.github.shiftey.Desktop
   io.missioncenter.MissionCenter
-  it.mijorus.gearlever
   net.davidotek.pupgui2
   org.blender.Blender
-  org.flathub.flatpak-external-data-checker
   org.gimp.GIMP
-  org.gnome.Calendar
   org.gnome.gThumb
-  org.gnome.Loupe
-  org.gnome.meld
-  org.gtk.Gtk3theme.Adwaita-dark
-  org.mozilla.firefox
-  org.onlyoffice.desktopeditors
-  org.pulseaudio.pavucontrol
-  org.videolan.VLC
   rest.insomnia.Insomnia
   tv.plex.PlexDesktop
 )
 
-flatpak install -y flathub "${apps[@]}"
+if prompt_yes_no "Do you want to install full or minimal flatpaks (y=full | n=minimal)"; then
+  echo "Installing full..."
+  flatpak install -y flathub "${apps[@]}" "${apps2[@]}"
+else
+  echo "Installing minimal..."
+  flatpak install -y flathub "${apps[@]}"
+fi
