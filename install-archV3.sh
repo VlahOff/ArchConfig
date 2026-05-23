@@ -378,6 +378,7 @@ apps=(
   org.onlyoffice.desktopeditors
   org.pulseaudio.pavucontrol
   org.videolan.VLC
+  org.localsend.localsend_app
 )
 
 apps2=(
