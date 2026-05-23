@@ -23,6 +23,7 @@ local mainMod = "SUPER"
 
 local function restart_waybar()
     hl.exec_cmd("pkill waybar; waybar")
+    hl.exec_cmd("~/.config/hypr/new_wallpaper_changer.sh")
 end
 
 hl.on("hyprland.start", function()
@@ -31,10 +32,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --all")
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
     hl.exec_cmd("mako -c ~/.config/mako/config")
-    hl.exec_cmd("hypridle")
+    hl.exec_cmd("pidof hypridle || hypridle")
     hl.exec_cmd("nm-applet")
     hl.exec_cmd("wl-paste -t text --watch clipman store --no-persist")
-    hl.exec_cmd("~/.config/hypr/new_wallpaper_changer.sh")
 end)
 
 -- Preserve old `exec =` behavior: restart Waybar after config reloads too.
@@ -93,7 +93,12 @@ hl.config({
         preserve_split = true
     },
     master = {
-        new_status = "master"
+        new_status = "master",
+        orientation = "center",
+        slave_count_for_center_master = 2,
+        mfact = 0.5,
+        center_master_fallback = "left",
+        smart_resizing = true
     },
     scrolling = {
         fullscreen_on_one_column = true,
@@ -406,68 +411,59 @@ hl.window_rule({
     },
     suppress_event = "maximize"
 })
-
 hl.window_rule({
     match = {
         title = "^Calculator$"
     },
     float = true
 })
-
 hl.window_rule({
     match = {
         title = "^Picture-in-Picture$"
     },
     float = true
 })
-
 hl.window_rule({
     match = {
         title = "^Picture in picture$"
     },
     float = true
 })
-
 hl.window_rule({
     match = {
         title = "^Timeshift-gtk$"
     },
     float = true
 })
-
 hl.window_rule({
     match = {
         class = "^brave-nngceckbapebfimnlniiiahkandclblb-Default$"
     },
     float = true
 })
-
 hl.window_rule({
     match = {
         title = "^YouTube Music$"
     },
     tile = true
 })
-
 hl.window_rule({
     match = {
         class = "^rofi.*$"
     },
-    opacity = "0.8 0.8"
+    opacity = "0.7 0.7"
 })
-
 hl.window_rule({
     match = {
         class = "^spotify.*$"
     },
-    opacity = "0.8 0.8"
+    opacity = "0.7 0.7"
 })
-
 hl.window_rule({
     match = {
         class = "^org.gnome.Nautilus.*$"
     },
-    opacity = "0.8 0.8"
+    opacity = "0.7 0.7"
 })
 
 -------------
