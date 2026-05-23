@@ -364,41 +364,42 @@ sudo pacman -S --needed flatpak
 sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 apps=(
-  com.github.PintaProject.Pinta
+  com.anydesk.Anydesk
   com.github.tchx84.Flatseal
+  com.rustdesk.RustDesk
   io.github.flattool.Warehouse
-  io.github.shiftey.Desktop
   it.mijorus.gearlever
   org.flathub.flatpak-external-data-checker
   org.gnome.Calendar
   org.gnome.Loupe
   org.gnome.meld
   org.gtk.Gtk3theme.Adwaita-dark
+  org.localsend.localsend_app
   org.mozilla.firefox
-  org.onlyoffice.desktopeditors
   org.pulseaudio.pavucontrol
   org.videolan.VLC
-  org.localsend.localsend_app
 )
 
 apps2=(
-  com.discordapp.Discord
-  com.belmoussaoui.Authenticator
   app.zen_browser.zen
-  com.anydesk.Anydesk
+  com.belmoussaoui.Authenticator
+  com.discordapp.Discord
+  com.github.PintaProject.Pinta
   com.google.Chrome
   com.microsoft.Edge
   com.mongodb.Compass
-  com.rustdesk.RustDesk
   com.spotify.Client
   com.transmissionbt.Transmission
   com.viber.Viber
+  eu.codepoems.xl-converter
   fr.handbrake.ghb
+  io.github.shiftey.Desktop
   io.missioncenter.MissionCenter
   net.davidotek.pupgui2
   org.blender.Blender
   org.gimp.GIMP
   org.gnome.gThumb
+  org.onlyoffice.desktopeditors
   rest.insomnia.Insomnia
   tv.plex.PlexDesktop
 )
