@@ -139,7 +139,6 @@ install_yay_if_missing() {
 # ---------- user folders / files ----------
 copy_dir_contents "$SCRIPT_DIR/.fonts" "$USER_HOME/.fonts"
 copy_dir_contents "$SCRIPT_DIR/.icons" "$USER_HOME/.icons"
-copy_dir_contents "$SCRIPT_DIR/carPics" "$USER_HOME/Pictures/carPics"
 
 for dir in ".fonts" ".icons" "Code"; do
   mkdir -p "$USER_HOME/$dir"
