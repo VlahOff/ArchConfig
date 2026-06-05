@@ -274,6 +274,8 @@ repo_pkgs=(
   fontconfig
   ttf-fira-code
   ttf-firacode-nerd
+  ttf-jetbrains-mono
+  ttf-jetbrains-mono-nerd
   woff2-font-awesome
   otf-font-awesome
   grim
