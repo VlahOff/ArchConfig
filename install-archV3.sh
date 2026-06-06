@@ -314,13 +314,33 @@ intel_pkgs=(
 
 pacman_install_existing_only "${repo_pkgs[@]}"
 
-if prompt_yes_no "Do you want to install AMD or Intel Graphics drivers (y=amd | n=intel)"; then
-  echo "Installing AMD Graphics drivers..."
-  pacman_install_existing_only "${amd_pkgs[@]}"
-else
-  echo "Installing Intel Graphics drivers..."
-  pacman_install_existing_only "${intel_pkgs[@]}"
-fi
+while true; do
+  echo "Select Graphics drivers to install:"
+  echo "  1) AMD"
+  echo "  2) Intel"
+  echo "  3) Skip"
+  read -rp "Enter choice [1-3]: " graphics_driver_choice
+
+  case "$graphics_driver_choice" in
+    1|[Aa]|[Aa][Mm][Dd])
+      echo "Installing AMD Graphics drivers..."
+      pacman_install_existing_only "${amd_pkgs[@]}"
+      break
+      ;;
+    2|[Ii]|[Ii][Nn][Tt][Ee][Ll])
+      echo "Installing Intel Graphics drivers..."
+      pacman_install_existing_only "${intel_pkgs[@]}"
+      break
+      ;;
+    3|[Ss]|[Ss][Kk][Ii][Pp])
+      echo "Skipping Graphics driver installation."
+      break
+      ;;
+    *)
+      echo "Please enter 1, 2, or 3."
+      ;;
+  esac
+done
 
 # ---------- services ----------
 sudo systemctl enable --now NetworkManager || true
