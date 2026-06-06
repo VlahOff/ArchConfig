@@ -136,6 +136,91 @@ install_yay_if_missing() {
   rm -rf "$tmpdir"
 }
 
+install_zsh_extras() {
+  local zshrc="$USER_HOME/.zshrc"
+  local zsh_custom_dir="${ZSH_CUSTOM:-$USER_HOME/.oh-my-zsh/custom}"
+  local ohmyzsh_installer
+
+  if [[ ! -d "$USER_HOME/.oh-my-zsh" ]]; then
+    echo "Installing Oh My Zsh..."
+    ohmyzsh_installer="$(mktemp)"
+    curl -fsSL -o "$ohmyzsh_installer" https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+    RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh "$ohmyzsh_installer"
+    rm -f "$ohmyzsh_installer"
+  else
+    echo "Oh My Zsh already installed."
+  fi
+
+  mkdir -p "$zsh_custom_dir/themes" "$zsh_custom_dir/plugins"
+
+  if [[ ! -d "$zsh_custom_dir/themes/powerlevel10k" ]]; then
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$zsh_custom_dir/themes/powerlevel10k"
+  else
+    echo "Powerlevel10k already installed."
+  fi
+
+  if [[ ! -d "$zsh_custom_dir/plugins/zsh-autosuggestions" ]]; then
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$zsh_custom_dir/plugins/zsh-autosuggestions"
+  else
+    echo "zsh-autosuggestions already installed."
+  fi
+
+  if [[ ! -d "$zsh_custom_dir/plugins/zsh-syntax-highlighting" ]]; then
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$zsh_custom_dir/plugins/zsh-syntax-highlighting"
+  else
+    echo "zsh-syntax-highlighting already installed."
+  fi
+
+  touch "$zshrc"
+
+  if grep -q '^export ZSH=' "$zshrc"; then
+    sed -i 's|^export ZSH=.*|export ZSH="$HOME/.oh-my-zsh"|' "$zshrc"
+  else
+    printf '\nexport ZSH="$HOME/.oh-my-zsh"\n' >> "$zshrc"
+  fi
+
+  if grep -q '^ZSH_THEME=' "$zshrc"; then
+    sed -i 's|^ZSH_THEME=.*|ZSH_THEME="powerlevel10k/powerlevel10k"|' "$zshrc"
+  else
+    printf 'ZSH_THEME="powerlevel10k/powerlevel10k"\n' >> "$zshrc"
+  fi
+
+  if grep -q '^plugins=' "$zshrc"; then
+    sed -i 's|^plugins=.*|plugins=(git web-search zsh-autosuggestions zsh-syntax-highlighting)|' "$zshrc"
+  else
+    printf 'plugins=(git web-search zsh-autosuggestions zsh-syntax-highlighting)\n' >> "$zshrc"
+  fi
+
+  if ! grep -q 'oh-my-zsh.sh' "$zshrc"; then
+    printf 'source "$ZSH/oh-my-zsh.sh"\n' >> "$zshrc"
+  fi
+}
+
+install_nvm_and_node_tools() {
+  local nvm_version="v0.40.0"
+  local nvm_installer
+
+  export NVM_DIR="$USER_HOME/.nvm"
+
+  if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
+    echo "Installing nvm..."
+    mkdir -p "$NVM_DIR"
+    nvm_installer="$(mktemp)"
+    curl -fsSL -o "$nvm_installer" "https://raw.githubusercontent.com/nvm-sh/nvm/$nvm_version/install.sh"
+    PROFILE="$USER_HOME/.zshrc" bash "$nvm_installer"
+    rm -f "$nvm_installer"
+  else
+    echo "nvm already installed."
+  fi
+
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh"
+
+  nvm install --lts
+  nvm use --lts
+  npm install -g nodemon eslint typescript tldr firebase-tools http-server
+}
+
 # ---------- user folders / files ----------
 copy_dir_contents "$SCRIPT_DIR/.fonts" "$USER_HOME/.fonts"
 copy_dir_contents "$SCRIPT_DIR/.icons" "$USER_HOME/.icons"
@@ -431,6 +516,16 @@ if prompt_yes_no "Do you want to install full or minimal flatpaks (y=full | n=mi
 else
   echo "Installing minimal Flatpaks..."
   flatpak install -y flathub "${apps[@]}"
+fi
+
+# ---------- shell / node ----------
+install_zsh_extras
+install_nvm_and_node_tools
+
+if need_cmd zsh; then
+  sudo chsh -s "$(command -v zsh)" "$ORIGINAL_USER"
+else
+  echo "zsh command not found. Skipping default shell change."
 fi
 
 echo "Done."
