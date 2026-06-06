@@ -1,13 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+#IMAGE_DIR="/home/vlahoff/Pictures/wide"
+#IMAGE_DIR="/home/vlahoff/Pictures/space"
 IMAGE_DIR="/home/vlahoff/Pictures/carPics"
 INTERVAL=600
 
-command -v hyprpaper >/dev/null 2>&1 || { echo "Error: hyprpaper not found"; exit 1; }
-command -v hyprctl   >/dev/null 2>&1 || { echo "Error: hyprctl not found"; exit 1; }
-command -v shuf      >/dev/null 2>&1 || { echo "Error: shuf not found (coreutils)"; exit 1; }
-command -v find      >/dev/null 2>&1 || { echo "Error: find not found"; exit 1; }
+command -v hyprpaper >/dev/null 2>&1 || {
+  echo "Error: hyprpaper not found"
+  exit 1
+}
+command -v hyprctl >/dev/null 2>&1 || {
+  echo "Error: hyprctl not found"
+  exit 1
+}
+command -v shuf >/dev/null 2>&1 || {
+  echo "Error: shuf not found (coreutils)"
+  exit 1
+}
+command -v find >/dev/null 2>&1 || {
+  echo "Error: find not found"
+  exit 1
+}
 
 # Kill any older instances of this same script before continuing.
 # This uses both a pidfile and a /proc scan, so it works whether the old
@@ -78,7 +92,7 @@ find_same_script_pids() {
           break
         fi
       fi
-    done < "$proc/cmdline"
+    done <"$proc/cmdline"
 
     ((found)) && echo "$pid"
   done
@@ -96,7 +110,7 @@ fi
 mapfile -t OLD_PIDS < <(find_same_script_pids | sort -n -u)
 kill_old_pids "${OLD_PIDS[@]}"
 
-printf '%s\n' "$$" > "$PID_FILE"
+printf '%s\n' "$$" >"$PID_FILE"
 cleanup_pidfile() {
   if [[ -f "$PID_FILE" ]] && [[ "$(cat "$PID_FILE" 2>/dev/null || true)" == "$$" ]]; then
     rm -f "$PID_FILE"
@@ -137,14 +151,14 @@ while true; do
   fi
 
   for img in "${shuffled[@]}"; do
-  hyprctl hyprpaper preload "$img" >/dev/null 2>&1 || true
+    hyprctl hyprpaper preload "$img" >/dev/null 2>&1 || true
 
-  for m in "${MONITORS[@]}"; do
-    hyprctl hyprpaper wallpaper "${m},${img}"
+    for m in "${MONITORS[@]}"; do
+      hyprctl hyprpaper wallpaper "${m},${img}"
+    done
+
+    hyprctl hyprpaper unload unused >/dev/null 2>&1 || true
+
+    sleep "$INTERVAL"
   done
-
-  hyprctl hyprpaper unload unused >/dev/null 2>&1 || true
-
-  sleep "$INTERVAL"
-done
 done
