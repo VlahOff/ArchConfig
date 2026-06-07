@@ -470,9 +470,7 @@ sudo pacman -S --needed flatpak
 sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 apps=(
-  com.anydesk.Anydesk
   com.github.tchx84.Flatseal
-  com.rustdesk.RustDesk
   io.github.flattool.Warehouse
   it.mijorus.gearlever
   org.flathub.flatpak-external-data-checker
@@ -480,15 +478,14 @@ apps=(
   org.gnome.Loupe
   org.gnome.meld
   org.gtk.Gtk3theme.Adwaita-dark
-  org.localsend.localsend_app
   org.mozilla.firefox
   org.pulseaudio.pavucontrol
   org.videolan.VLC
 )
 
 apps2=(
-  app.zen_browser.zen
-  com.belmoussaoui.Authenticator
+  com.anydesk.Anydesk
+  com.rustdesk.RustDesk
   com.discordapp.Discord
   com.github.PintaProject.Pinta
   com.google.Chrome
@@ -507,7 +504,6 @@ apps2=(
   org.gnome.gThumb
   org.onlyoffice.desktopeditors
   rest.insomnia.Insomnia
-  tv.plex.PlexDesktop
 )
 
 if prompt_yes_no "Do you want to install full or minimal flatpaks (y=full | n=minimal)"; then
