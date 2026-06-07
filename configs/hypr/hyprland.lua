@@ -41,6 +41,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("pidof hypridle || hypridle")
     hl.exec_cmd("nm-applet")
     hl.exec_cmd("wl-paste -t text --watch clipman store --no-persist")
+    hl.exec_cmd("xrandr --output DP-1 --primary")
 end)
 
 -- Preserve old `exec =` behavior: restart Waybar after config reloads too.
@@ -259,7 +260,8 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({
     action = "toggle"
 }))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({
-    mode = "maximized"
+    mode = "fullscreen",
+    action = "toggle"
 }))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(menu))
 -- hl.bind(mainMod .. " + P", hl.dsp.window.pseudo()) -- dwindle
