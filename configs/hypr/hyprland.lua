@@ -394,6 +394,7 @@ hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), {
 
 -- Screenshot / clipboard / color picker controls.
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd([[grim -g "$(slurp)" -t jpeg -q 100]]))
+hl.bind(mainMod .. " + T", hl.dsp.exec_cmd([[sh -c 'grim -g "$(slurp)" -t png - | tesseract stdin stdout -l eng+bul | wl-copy --type text/plain && notify-send "OCR" "Text copied to clipboard"']]))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hyprpicker -a"))
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("clipman pick -t wofi"))
 hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("wl-copy -c"))

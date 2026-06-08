@@ -384,6 +384,10 @@ repo_pkgs=(
   cronie
   man-db
   man-pages
+  slurp
+  tesseract 
+  wl-clipboard
+  tesseract-data-bul
 )
 
 amd_pkgs=(
