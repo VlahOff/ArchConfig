@@ -19,7 +19,7 @@ hl.monitor({
 -------------------
 
 local terminal = "kitty"
-local fileManager = "nautilus"
+local fileManager = "nemo"
 local menu = "rofi -show drun"
 local mainMod = "SUPER"
 
@@ -34,6 +34,7 @@ end
 
 hl.on("hyprland.start", function()
     restart_waybar()
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     hl.exec_cmd("dbus-update-activation-environment --all")
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
@@ -58,8 +59,8 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
 -- hl.env("QT_QPA_PLATFORMTHEME", "qt5ct") -- change to qt6ct if you have that
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
-hl.env("XDG_SESSION_TYPE", "wayland")
 hl.env("XDG_SESSION_DESKTOP", "Hyprland")
+hl.env("XDG_SESSION_TYPE", "wayland")
 
 -------------------
 --  LOOK & FEEL  --

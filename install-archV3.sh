@@ -388,6 +388,7 @@ repo_pkgs=(
   tesseract 
   wl-clipboard
   tesseract-data-bul
+  nemo
 )
 
 amd_pkgs=(
