@@ -25,7 +25,6 @@
         "tray",
         "custom/wlogout"
     ],
-    // Modules configuration
     "hyprland/workspaces": {
         "format": "{icon}",
         "on-scroll-up": "hyprctl dispatch workspace e+1",
@@ -46,7 +45,7 @@
         }
     },
     "hyprland/language": {
-        "format": "{short} {variant}",
+        "format": "{short} {variant}"
     },
     "idle_inhibitor": {
         "format": "{icon}",

@@ -29,7 +29,7 @@
         "format": "{icon}",
         "on-scroll-up": "hyprctl dispatch workspace e+1",
         "on-scroll-down": "hyprctl dispatch workspace e-1",
-        "all-outputs": false
+        "all-outputs": true
     },
     "hyprland/window": {
         "max-length": 80,
@@ -45,7 +45,7 @@
         }
     },
     "hyprland/language": {
-        "format": "{short} {variant}",
+        "format": "{short} {variant}"
     },
     "idle_inhibitor": {
         "format": "{icon}",
