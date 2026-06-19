@@ -460,9 +460,9 @@ hl.window_rule({
 })
 hl.window_rule({
     match = {
-        class = "^org.gnome.Nautilus.*$"
+        class = "^nemo*$"
     },
-    opacity = "0.7 0.7"
+    opacity = "0.8 0.8"
 })
 hl.workspace_rule({
     workspace = "10",
