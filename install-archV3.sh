@@ -434,15 +434,5 @@ else
   flatpak install -y flathub "${apps[@]}"
 fi
 
-# ---------- shell / node ----------
-install_zsh_extras
-install_nvm_and_node_tools
-
-if need_cmd zsh; then
-  sudo chsh -s "$(command -v zsh)" "$ORIGINAL_USER"
-else
-  echo "zsh command not found. Skipping default shell change."
-fi
-
 echo "Done."
 echo "Log out and back in, or reboot, so group changes take effect."
