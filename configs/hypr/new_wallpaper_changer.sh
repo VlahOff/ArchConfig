@@ -41,6 +41,7 @@ SCRIPT_PATH="$(readlink -f -- "$0")"
 APP_ID="hyprpaper_wallpaper_changer"
 STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}"
 PID_FILE="$STATE_DIR/${APP_ID}.${UID}.pid"
+HYPRPAPER_LOG="$STATE_DIR/${APP_ID}.${UID}.hyprpaper.log"
 
 kill_old_pids() {
   local pids=("$@")
@@ -132,7 +133,7 @@ trap terminate INT TERM
 # Querying the IPC is more reliable than pgrep when the same user has more than
 # one Hyprland session.
 if ! hyprctl hyprpaper listactive >/dev/null 2>&1; then
-  hyprpaper &
+  hyprpaper >"$HYPRPAPER_LOG" 2>&1 &
   hyprpaper_ready=0
   for _ in {1..20}; do
     if hyprctl hyprpaper listactive >/dev/null 2>&1; then
@@ -143,7 +144,7 @@ if ! hyprctl hyprpaper listactive >/dev/null 2>&1; then
   done
 
   if ((hyprpaper_ready == 0)); then
-    echo "Error: hyprpaper did not become ready."
+    echo "Error: hyprpaper did not become ready. Check '$HYPRPAPER_LOG'."
     exit 1
   fi
 fi
