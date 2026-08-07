@@ -131,11 +131,11 @@ trap terminate INT TERM
 
 # Querying the IPC is more reliable than pgrep when the same user has more than
 # one Hyprland session.
-if ! hyprctl hyprpaper listloaded >/dev/null 2>&1; then
+if ! hyprctl hyprpaper listactive >/dev/null 2>&1; then
   hyprpaper &
   hyprpaper_ready=0
   for _ in {1..20}; do
-    if hyprctl hyprpaper listloaded >/dev/null 2>&1; then
+    if hyprctl hyprpaper listactive >/dev/null 2>&1; then
       hyprpaper_ready=1
       break
     fi
@@ -242,22 +242,14 @@ while true; do
     wait_until_displays_awake
     wait_for_monitors
 
-    if ! hyprctl hyprpaper preload "$img" >/dev/null 2>&1; then
-      echo "Warning: could not preload '$img'; skipping it." >&2
-      sleep "$DPMS_POLL_INTERVAL"
-      continue
-    fi
-
     wallpaper_was_set=0
     for m in "${MONITORS[@]}"; do
-      if hyprctl hyprpaper wallpaper "${m},${img}" >/dev/null 2>&1; then
+      if hyprctl hyprpaper wallpaper "${m}, ${img}, cover" >/dev/null 2>&1; then
         wallpaper_was_set=1
       else
         echo "Warning: could not set '$img' on monitor '$m'." >&2
       fi
     done
-
-    hyprctl hyprpaper unload unused >/dev/null 2>&1 || true
 
     if ((wallpaper_was_set)); then
       sleep_active_interval
