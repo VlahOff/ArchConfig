@@ -28,7 +28,9 @@ end
 
 hl.on("hyprland.start", function()
     restart_waybar()
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE")
+    hl.exec_cmd(
+        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE")
+    hl.exec_cmd("systemctl --user start hyprland-session.target")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     hl.exec_cmd("dbus-update-activation-environment --all")
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
@@ -42,6 +44,10 @@ end)
 -- Preserve old `exec =` behavior: restart Waybar after config reloads too.
 hl.on("config.reloaded", function()
     restart_waybar()
+end)
+
+hl.on("hyprland.shutdown", function()
+    os.execute("systemctl --user stop hyprland-session.target")
 end)
 
 -----------------------------
@@ -401,7 +407,8 @@ hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), {
 
 -- Screenshot / clipboard / color picker controls.
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd([[grim -g "$(slurp)" -t jpeg -q 100]]))
-hl.bind(mainMod .. " + T", hl.dsp.exec_cmd([[sh -c 'grim -g "$(slurp)" -t png - | tesseract stdin stdout -l eng+bul | wl-copy --type text/plain && notify-send "OCR" "Text copied to clipboard"']]))
+hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(
+    [[sh -c 'grim -g "$(slurp)" -t png - | tesseract stdin stdout -l eng+bul | wl-copy --type text/plain && notify-send "OCR" "Text copied to clipboard"']]))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("hyprpicker -a"))
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("clipman pick -t wofi"))
 hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("wl-copy -c"))
@@ -470,7 +477,12 @@ hl.window_rule({
     },
     opacity = "0.7 0.7"
 })
-
+hl.window_rule({
+    match = {
+        class = "^nemo*$"
+    },
+    opacity = "0.8 0.8"
+})
 -------------
 -- GESTURES
 -------------
