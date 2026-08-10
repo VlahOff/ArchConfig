@@ -55,23 +55,24 @@ copy_dir_contents() {
 }
 
 enable_multilib() {
-  if grep -q '^[[:space:]]*\[multilib\]' /etc/pacman.conf; then
-    echo "multilib already appears to be enabled."
-    return 0
-  fi
+    if grep -q '^[[:space:]]*\[multilib\]' /etc/pacman.conf; then
+        echo "multilib already enabled."
+        return 0
+    fi
 
-  if grep -q '^[[:space:]]*#[[:space:]]*\[multilib\]' /etc/pacman.conf; then
-    echo "Enabling multilib in /etc/pacman.conf..."
+    if grep -q '^[[:space:]]*#[[:space:]]*\[multilib\]' /etc/pacman.conf; then
+        echo "Enabling multilib..."
 
-    sudo sed -i \
-      '/^[[:space:]]*#[[:space:]]*\[multilib\]/,/^[[:space:]]*#[[:space:]]*Include = \/etc\/pacman.d\/mirrorlist/{
-        s/^[[:space:]]*#[[:space:]]*\[multilib\]/[multilib]/
-        s/^[[:space:]]*#[[:space:]]*Include = \/etc\/pacman\.d\/mirrorlist/Include = \/etc\/pacman.d\/mirrorlist/
-      }' \
-      /etc/pacman.conf
-  else
-    echo "No [multilib] section found in /etc/pacman.conf. Skipping."
-  fi
+        sudo sed -i \
+            '/^[[:space:]]*#[[:space:]]*\[multilib\]/,/^[[:space:]]*#[[:space:]]*Include[[:space:]]*=[[:space:]]*\/etc\/pacman.d\/mirrorlist/{
+                s/^[[:space:]]*#[[:space:]]*\[multilib\]/[multilib]/
+                s/^[[:space:]]*#[[:space:]]*Include[[:space:]]*=[[:space:]]*\/etc\/pacman.d\/mirrorlist/Include = \/etc\/pacman.d\/mirrorlist/
+            }' /etc/pacman.conf
+
+        sudo pacman -Sy
+    else
+        echo "No [multilib] section found."
+    fi
 }
 
 pacman_install_existing_only() {
@@ -214,18 +215,23 @@ done
 # ---------- main ----------
 enable_multilib
 
-pacman_remove_installed_only \
-  snapshot \
-  gnome-connections \
-  gnome-maps \
-  decibels \
-  gnome-contacts \
-  showtime \
-  gnome-music \
-  dolphin \
-  gnome-weather \
-  epiphany \
-  gnome-software
+remove_pkgs=(
+  snapshot 
+  gnome-connections 
+  gnome-maps 
+  decibels 
+  gnome-contacts 
+  showtime 
+  gnome-music 
+  dolphin 
+  gnome-weather 
+  epiphany 
+  gnome-software 
+  gnome-calendar 
+  loupe
+)
+
+pacman_remove_installed_only "${remove_pkgs[@]}"
 
 # Full system upgrade
 sudo pacman -Syu
@@ -307,15 +313,18 @@ repo_pkgs=(
   clamav
   cups
   jq
-  meld
   python-pip
   reflector
   ripgrep
   wine
   wlr-randr
+  linux-headers
+  linux-lts-headers
 )
 
 amd_pkgs=(
+  vulkan-radeon
+  lib32-vulkan-radeon
   amdsmi
   rocm-smi-lib
 )
@@ -395,7 +404,6 @@ aur_pkgs=(
 yay -Syu --needed "${aur_pkgs[@]}"
 
 # ---------- Flatpak ----------
-sudo pacman -S --needed flatpak
 sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 apps=(
