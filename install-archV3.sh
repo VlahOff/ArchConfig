@@ -238,7 +238,7 @@ repo_pkgs=(
   qemu-full
   libvirt
   dnsmasq
-  iptables-nft
+  iptables
   edk2-ovmf
   swtpm
   docker
@@ -304,6 +304,15 @@ repo_pkgs=(
   wl-clipboard
   tesseract-data-bul
   nemo
+  clamav
+  cups
+  jq
+  meld
+  python-pip
+  reflector
+  ripgrep
+  wine
+  wlr-randr
 )
 
 amd_pkgs=(
