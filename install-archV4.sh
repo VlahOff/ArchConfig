@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+
+report_error() {
+  local exit_code="$1"
+  local line_number="$2"
+  local failed_command="$3"
+
+  printf '❌ Error: command failed with exit code %s at line %s: %s\n' \
+    "$exit_code" "$line_number" "$failed_command" >&2
+}
+
+trap 'report_error "$?" "$LINENO" "$BASH_COMMAND"' ERR
 
 # Run this script as your normal user, not with sudo.
 # The script uses sudo only where needed.
@@ -55,24 +66,29 @@ copy_dir_contents() {
 }
 
 enable_multilib() {
-    if grep -q '^[[:space:]]*\[multilib\]' /etc/pacman.conf; then
-        echo "multilib already enabled."
-        return 0
-    fi
+  if pacman-conf --repo multilib Server 2>/dev/null | grep -q .; then
+    echo "multilib already enabled."
+    return 0
+  fi
 
-    if grep -q '^[[:space:]]*#[[:space:]]*\[multilib\]' /etc/pacman.conf; then
-        echo "Enabling multilib..."
+  if ! grep -Eq '^[[:space:]]*#?[[:space:]]*\[multilib\][[:space:]]*$' /etc/pacman.conf; then
+    echo "❌ No [multilib] section found in /etc/pacman.conf."
+    return 1
+  fi
 
-        sudo sed -i \
-            '/^[[:space:]]*#[[:space:]]*\[multilib\]/,/^[[:space:]]*#[[:space:]]*Include[[:space:]]*=[[:space:]]*\/etc\/pacman.d\/mirrorlist/{
-                s/^[[:space:]]*#[[:space:]]*\[multilib\]/[multilib]/
-                s/^[[:space:]]*#[[:space:]]*Include[[:space:]]*=[[:space:]]*\/etc\/pacman.d\/mirrorlist/Include = \/etc\/pacman.d\/mirrorlist/
-            }' /etc/pacman.conf
+  echo "Enabling multilib..."
+  sudo sed -Ei \
+    '/^[[:space:]]*#?[[:space:]]*\[multilib\][[:space:]]*$/,/^[[:space:]]*#?[[:space:]]*\[[^]]+\][[:space:]]*$/ {
+      s/^[[:space:]]*#[[:space:]]*(\[multilib\][[:space:]]*)$/\1/
+      s|^[[:space:]]*#[[:space:]]*(Include[[:space:]]*=[[:space:]]*/etc/pacman.d/mirrorlist[[:space:]]*)$|\1|
+    }' /etc/pacman.conf
 
-        sudo pacman -Sy
-    else
-        echo "No [multilib] section found."
-    fi
+  if ! pacman-conf --repo multilib Server 2>/dev/null | grep -q .; then
+    echo "❌ multilib has no configured Pacman servers after editing /etc/pacman.conf."
+    return 1
+  fi
+
+  echo "multilib enabled."
 }
 
 pacman_install_existing_only() {
@@ -127,114 +143,121 @@ install_yay_if_missing() {
   local tmpdir
   tmpdir="$(mktemp -d)"
 
-  git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
-
   (
+    trap 'rm -rf -- "$tmpdir"' EXIT
+
+    git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
     cd "$tmpdir/yay"
     makepkg -si
   )
-
-  rm -rf "$tmpdir"
 }
 
-# ---------- user folders / files ----------
-copy_dir_contents "$SCRIPT_DIR/.fonts" "$USER_HOME/.fonts"
-copy_dir_contents "$SCRIPT_DIR/.icons" "$USER_HOME/.icons"
+install_user_files() {
+  local config_dir="$USER_HOME/.config"
+  local config_src_dir
+  local item src dst
+  local -a config_items=(
+    btop
+    fastfetch
+    hypr
+    kitty
+    mako
+    nvim
+    rofi
+    waybar
+    wlogout
+  )
 
-for dir in ".fonts" ".icons" "Code"; do
-  mkdir -p "$USER_HOME/$dir"
-done
+  copy_dir_contents "$SCRIPT_DIR/.fonts" "$USER_HOME/.fonts"
+  copy_dir_contents "$SCRIPT_DIR/.icons" "$USER_HOME/.icons"
 
-# ---------- config symlinks ----------
-CONFIG_DIR="$USER_HOME/.config"
+  for item in ".fonts" ".icons" "Code"; do
+    mkdir -p "$USER_HOME/$item"
+  done
 
-mkdir -p "$CONFIG_DIR"
+  mkdir -p "$config_dir"
 
-config_items=(
-  bleachbit
-  btop
-  fastfetch
-  hypr
-  kitty
-  mako
-  nvim
-  rofi
-  ulauncher
-  waybar
-  wlogout
-)
-
-if prompt_yes_no "Do you want to install PC or Laptop configs (y=PC | n=Laptop)"; then
-  echo "Linking PC configs..."
-  CONFIG_SRC_DIR="$SCRIPT_DIR/configs"
-else
-  echo "Linking laptop configs..."
-  CONFIG_SRC_DIR="$SCRIPT_DIR/configs-laptop"
-fi
-
-if [[ ! -d "$CONFIG_SRC_DIR" ]]; then
-  echo "❌ Config source directory not found: $CONFIG_SRC_DIR"
-  exit 1
-fi
-
-for item in "${config_items[@]}"; do
-  SRC="$CONFIG_SRC_DIR/$item"
-  DST="$CONFIG_DIR/$item"
-
-  if [[ ! -e "$SRC" ]]; then
-    echo "⚠ Source not found: $SRC, skipping."
-    continue
+  if prompt_yes_no "Do you want to install PC or Laptop configs (y=PC | n=Laptop)"; then
+    echo "Linking PC configs..."
+    config_src_dir="$SCRIPT_DIR/configs"
+  else
+    echo "Linking laptop configs..."
+    config_src_dir="$SCRIPT_DIR/configs-laptop"
   fi
 
-  echo "Replacing $DST with symlink to $SRC"
-
-  # Remove existing file, dir, or symlink
-  if [[ -e "$DST" || -L "$DST" ]]; then
-    sudo rm -rf -- "$DST"
+  if [[ ! -d "$config_src_dir" ]]; then
+    echo "❌ Config source directory not found: $config_src_dir"
+    return 1
   fi
 
-  # If it still exists, move it out of the way
-  if [[ -e "$DST" || -L "$DST" ]]; then
-    BACKUP="${DST}.backup.$(date +%Y%m%d-%H%M%S)"
-    echo "⚠ Could not delete $DST, moving it to $BACKUP"
-    sudo mv -- "$DST" "$BACKUP"
+  for item in "${config_items[@]}"; do
+    src="$config_src_dir/$item"
+    dst="$config_dir/$item"
+
+    if [[ ! -e "$src" ]]; then
+      echo "⚠ Source not found: $src, skipping."
+      continue
+    fi
+
+    echo "Replacing $dst with symlink to $src"
+
+    if [[ -e "$dst" || -L "$dst" ]]; then
+      rm -rf -- "$dst"
+    fi
+
+    if [[ -e "$dst" || -L "$dst" ]]; then
+      echo "❌ Failed to remove existing path: $dst"
+      return 1
+    fi
+
+    # -T prevents linking inside an existing directory
+    ln -sT -- "$src" "$dst"
+    echo "✔ Linked $item"
+  done
+}
+
+install_kernel_headers() {
+  local kernel
+  local -a installed_kernel_headers=()
+  local -a supported_kernels=(linux linux-lts linux-zen linux-hardened)
+
+  for kernel in "${supported_kernels[@]}"; do
+    if pacman -Q "$kernel" >/dev/null 2>&1; then
+      installed_kernel_headers+=("${kernel}-headers")
+    fi
+  done
+
+  if ((${#installed_kernel_headers[@]})); then
+    echo "Installing headers for detected kernels: ${installed_kernel_headers[*]}"
+    pacman_install_existing_only "${installed_kernel_headers[@]}"
+  else
+    echo "⚠ No supported installed kernel detected; skipping kernel headers."
   fi
-
-  # Final safety check
-  if [[ -e "$DST" || -L "$DST" ]]; then
-    echo "❌ Failed to remove or move existing path: $DST"
-    exit 1
-  fi
-
-  # -T prevents linking inside an existing directory
-  ln -sT -- "$SRC" "$DST"
-
-  echo "✔ Linked $item"
-done
+}
 
 # ---------- main ----------
 enable_multilib
 
+# Refresh package databases and complete the full upgrade as one operation.
+sudo pacman -Syu
+
 remove_pkgs=(
-  snapshot 
-  gnome-connections 
-  gnome-maps 
-  decibels 
-  gnome-contacts 
-  showtime 
-  gnome-music 
-  dolphin 
-  gnome-weather 
-  epiphany 
-  gnome-software 
-  gnome-calendar 
+  snapshot
+  gnome-connections
+  gnome-maps
+  decibels
+  gnome-contacts
+  showtime
+  gnome-music
+  dolphin
+  gnome-weather
+  epiphany
+  gnome-software
+  gnome-calendar
   loupe
 )
 
 pacman_remove_installed_only "${remove_pkgs[@]}"
-
-# Full system upgrade
-sudo pacman -Syu
 
 # Repo packages
 repo_pkgs=(
@@ -276,6 +299,7 @@ repo_pkgs=(
   solaar
   gnome-themes-extra
   powertop
+  brightnessctl
   fastfetch
   fontconfig
   ttf-fira-code
@@ -306,7 +330,7 @@ repo_pkgs=(
   man-db
   man-pages
   slurp
-  tesseract 
+  tesseract
   wl-clipboard
   tesseract-data-bul
   nemo
@@ -318,60 +342,41 @@ repo_pkgs=(
   ripgrep
   wine
   wlr-randr
-  linux-headers
-  linux-lts-headers
 )
 
-amd_pkgs=(
-  vulkan-radeon
-  lib32-vulkan-radeon
+amd_monitoring_pkgs=(
   amdsmi
   rocm-smi-lib
 )
 
-intel_pkgs=(
-  vulkan-intel
-  intel-media-driver
-  lib32-vulkan-intel
-)
-
 pacman_install_existing_only "${repo_pkgs[@]}"
+install_kernel_headers
 
-while true; do
-  echo "Select Graphics drivers to install:"
-  echo "  1) AMD"
-  echo "  2) Intel"
-  echo "  3) Skip"
-  read -rp "Enter choice [1-3]: " graphics_driver_choice
-
-  case "$graphics_driver_choice" in
-    1|[Aa]|[Aa][Mm][Dd])
-      echo "Installing AMD Graphics drivers..."
-      pacman_install_existing_only "${amd_pkgs[@]}"
-      break
-      ;;
-    2|[Ii]|[Ii][Nn][Tt][Ee][Ll])
-      echo "Installing Intel Graphics drivers..."
-      pacman_install_existing_only "${intel_pkgs[@]}"
-      break
-      ;;
-    3|[Ss]|[Ss][Kk][Ii][Pp])
-      echo "Skipping Graphics driver installation."
-      break
-      ;;
-    *)
-      echo "Please enter 1, 2, or 3."
-      ;;
-  esac
-done
+if prompt_yes_no "Do you want to install AMD GPU monitoring tools"; then
+  echo "Installing AMD GPU monitoring tools..."
+  pacman_install_existing_only "${amd_monitoring_pkgs[@]}"
+else
+  echo "Skipping AMD GPU monitoring tools."
+fi
 
 # ---------- services ----------
 sudo systemctl enable --now NetworkManager || true
 sudo systemctl enable --now libvirtd
 sudo systemctl enable --now docker
-sudo systemctl start sshd
-sudo systemctl enable sshd
 sudo systemctl enable --now cronie.service
+sudo systemctl enable --now cups.socket
+sudo systemctl enable --now reflector.timer
+
+ssh_enabled=0
+if prompt_yes_no "Do you want to enable the SSH server"; then
+  sudo systemctl enable --now sshd
+  ssh_enabled=1
+else
+  echo "Leaving the SSH server disabled."
+fi
+
+sudo systemctl start clamav-freshclam-once.service
+sudo systemctl enable --now clamav-freshclam-once.timer
 
 # Libvirt default network
 sudo virsh net-autostart default || true
@@ -385,9 +390,9 @@ sudo usermod -aG docker "$ORIGINAL_USER" || true
 # Firewall
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
-sudo ufw allow 22/tcp
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
+if ((ssh_enabled)); then
+  sudo ufw limit 22/tcp
+fi
 sudo ufw enable
 sudo systemctl enable --now ufw.service
 
@@ -452,6 +457,9 @@ else
   echo "Installing minimal Flatpaks..."
   flatpak install -y flathub "${apps[@]}"
 fi
+
+# Install user files only after all package phases have succeeded.
+install_user_files
 
 echo "Done."
 echo "Log out and back in, or reboot, so group changes take effect."
