@@ -452,10 +452,10 @@ apps2=(
 
 if prompt_yes_no "Do you want to install full or minimal flatpaks (y=full | n=minimal)"; then
 	echo "Installing full Flatpaks..."
-	flatpak install -y flathub "${apps[@]}" "${apps2[@]}"
+	flatpak install --user -y flathub "${apps[@]}" "${apps2[@]}"
 else
 	echo "Installing minimal Flatpaks..."
-	flatpak install -y flathub "${apps[@]}"
+	flatpak install --user -y flathub "${apps[@]}"
 fi
 
 # Install user files only after all package phases have succeeded.
