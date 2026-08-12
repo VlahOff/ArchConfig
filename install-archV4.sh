@@ -447,7 +447,7 @@ apps2=(
 	org.onlyoffice.desktopeditors
 	rest.insomnia.Insomnia
 	org.telegram.desktop
-	app.zen_browser.zen
+	org.inkscape.Inkscape
 )
 
 if prompt_yes_no "Do you want to install full or minimal flatpaks (y=full | n=minimal)"; then
