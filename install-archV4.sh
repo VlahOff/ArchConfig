@@ -405,6 +405,7 @@ aur_pkgs=(
 	visual-studio-code-bin
 	clipman
 	wlogout
+	openai-codex-desktop
 )
 
 yay -Syu --needed "${aur_pkgs[@]}"
