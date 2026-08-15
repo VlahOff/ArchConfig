@@ -405,13 +405,13 @@ aur_pkgs=(
 	visual-studio-code-bin
 	clipman
 	wlogout
-	openai-codex-desktop
+	chatgpt-desktop
 )
 
 yay -Syu --needed "${aur_pkgs[@]}"
 
 # ---------- Flatpak ----------
-sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 apps=(
 	com.github.tchx84.Flatseal
