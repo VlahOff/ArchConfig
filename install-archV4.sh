@@ -126,14 +126,8 @@ pacman_remove_installed_only() {
 	done
 
 	if ((${#remove[@]})); then
-		echo "Pacman will remove the following packages:"
-		pacman -Rsp --print-format '  - %n %v' "${remove[@]}"
-
-		if prompt_yes_no "Do you want to remove these packages"; then
-			sudo pacman -Rs --noconfirm "${remove[@]}"
-		else
-			echo "Skipping package removal."
-		fi
+		echo "Removing listed packages and their unused dependencies..."
+		sudo pacman -Rs --noconfirm "${remove[@]}"
 	else
 		echo "No listed packages are installed. Nothing to remove."
 	fi
