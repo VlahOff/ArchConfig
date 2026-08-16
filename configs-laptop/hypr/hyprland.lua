@@ -374,12 +374,20 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), {
 })
 
 -- Brightness control
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -d intel_backlight s +5%"), {
+local function change_brightness(amount)
+    local command = string.format(
+        [[sh -c 'brightnessctl -d intel_backlight set %s >/dev/null && brightness="$(brightnessctl -d intel_backlight -m | cut -d, -f4)" && notify-send -r 9911 "Brightness" "$brightness"']],
+        amount)
+
+    return hl.dsp.exec_cmd(command)
+end
+
+hl.bind("XF86MonBrightnessUp", change_brightness("+5%"), {
     locked = true,
     repeating = true
 })
 
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -d intel_backlight s 5%-"), {
+hl.bind("XF86MonBrightnessDown", change_brightness("5%-"), {
     locked = true,
     repeating = true
 })
