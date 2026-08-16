@@ -272,6 +272,7 @@ repo_pkgs=(
 	edk2-ovmf
 	swtpm
 	docker
+	docker-compose
 	base-devel
 	git
 	curl
