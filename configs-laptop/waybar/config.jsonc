@@ -150,16 +150,19 @@
     "disk": {
         "interval": 30,
         "format": " /home {percentage_used}%",
+        "tooltip-format": "{used} used ({percentage_used}%) · {free} available",
         "path": "/home"
     },
     "disk#2": {
         "interval": 30,
         "format": " /HyprDrive {percentage_used}%",
+        "tooltip-format": "{used} used ({percentage_used}%) · {free} available",
         "path": "/mnt/HyprDrive"
     },
     "disk#3": {
         "interval": 30,
         "format": " /HyprSSD {percentage_used}%",
+        "tooltip-format": "{used} used ({percentage_used}%) · {free} available",
         "path": "/mnt/HyprSSD"
     },
     "custom/wlogout": {

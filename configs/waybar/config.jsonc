@@ -22,6 +22,7 @@
         "pulseaudio",
         "hyprland/language",
         "idle_inhibitor",
+        "custom/dualsense-battery",
         "tray",
         "custom/wlogout"
     ],
@@ -129,25 +130,37 @@
     "disk": {
         "interval": 30,
         "format": " /home {percentage_used}%",
+        "tooltip-format": "{used} used ({percentage_used}%) · {free} available",
         "path": "/home"
     },
     "disk#2": {
         "interval": 30,
         "format": " /HyprDrive {percentage_used}%",
+        "tooltip-format": "{used} used ({percentage_used}%) · {free} available",
         "path": "/mnt/HyprDrive"
     },
     "disk#3": {
         "interval": 30,
         "format": " /HyprSSD {percentage_used}%",
+        "tooltip-format": "{used} used ({percentage_used}%) · {free} available",
         "path": "/mnt/HyprSSD"
     },
     "disk#4": {
         "interval": 30,
         "format": " / {percentage_used}%",
+        "tooltip-format": "{used} used ({percentage_used}%) · {free} available",
         "path": "/"
     },
     "custom/wlogout": {
         "format": "",
         "on-click": "wlogout"
+    },
+    "custom/dualsense-battery": {
+        "exec": "~/.config/waybar/scripts/dualsense-battery.sh",
+        "exec-if": "find /sys/class/power_supply -maxdepth 1 -name 'ps-controller-battery-*' -print -quit | grep -q .",
+        "return-type": "json",
+        "interval": 10,
+        "format": "{}",
+        "tooltip": true
     }
 }

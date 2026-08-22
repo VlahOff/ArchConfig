@@ -3,7 +3,7 @@ set -euo pipefail
 
 # These can be overridden for one run, for example:
 # INTERVAL=300 IMAGE_DIR="$HOME/Pictures/wide" ./new_wallpaper_changer.sh
-IMAGE_DIR="${IMAGE_DIR:-/home/vlahoff/Pictures/carPics}"
+IMAGE_DIR="${IMAGE_DIR:-/home/vlahoff/Pictures/superUltraWide}"
 INTERVAL="${INTERVAL:-600}"
 DPMS_POLL_INTERVAL="${DPMS_POLL_INTERVAL:-5}"
 

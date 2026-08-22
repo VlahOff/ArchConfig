@@ -1,18 +1,31 @@
 ----------------
 --  MONITORS  --
 ----------------
-hl.monitor({
-    output = "DP-1",
-    mode = "3440x1440@180",
-    position = "0x0",
-    scale = 1
-})
+-- hl.monitor({
+--     output = "DP-1",
+--     mode = "3440x1440@180",
+--     position = "0x0",
+--     scale = 1
+-- })
 hl.monitor({
     output = "DP-2",
     mode = "1920x1080@75",
     position = "-1920x0",
     scale = 1
 })
+
+hl.monitor({
+    output = "DP-1",
+    mode = "5120x1440@120",
+    position = "0x0",
+    scale = 1,
+})
+-- hl.monitor({
+--     output = "DP-1",
+--     mode = "3440x1440@180",
+--     position = "840x-1440",
+--     scale = 1
+-- })
 
 -------------------
 --  MY PROGRAMS  --
@@ -45,6 +58,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("nm-applet")
     hl.exec_cmd("wl-paste -t text --watch clipman store --no-persist")
     hl.exec_cmd("xrandr --output DP-1 --primary")
+    hl.exec_cmd("blueman-applet")
 end)
 
 -- Preserve old `exec =` behavior: restart Waybar after config reloads too.
