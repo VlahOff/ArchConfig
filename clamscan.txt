@@ -1,0 +1,29 @@
+    sudo clamscan -r -i \
+    --archive-verbose \
+    --exclude-dir='^/proc' \
+    --exclude-dir='^/sys' \
+    --exclude-dir='^/dev' \
+    --exclude-dir='^/run' \
+    --exclude-dir='^/tmp' \
+    --exclude-dir='^/var/lib/docker' \
+    --exclude-dir='^/mnt' \
+    --log=/tmp/clamav-system.log \
+    /
+
+    tail -f /tmp/clamav-system.log.log
+    
+
+    sudo clamscan -r -i \
+    --archive-verbose \
+    --log=/tmp/clamav-hyprdrive.log \
+    /mnt/HyprDrive
+
+    tail -f /tmp/clamav-hyprdrive.log 
+    
+    
+    sudo clamscan -r -i \
+    --archive-verbose \
+    --log=/tmp/clamav-hyprssd.log \
+    /mnt/HyprSSD
+
+    tail -f /tmp/clamav-hyprssd.log
