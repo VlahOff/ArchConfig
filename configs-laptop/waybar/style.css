@@ -63,7 +63,7 @@ button:hover {
 }
 
 #workspaces button:hover {
-  border-top: 2px solid #6ab4ff;
+  border-top: 2px solid #c96400;
 }
 
 #workspaces button.focused {
@@ -78,7 +78,7 @@ button:hover {
 }
 
 #workspaces button.visible {
-  border-top: 2px solid #2880d7;
+  border-top: 2px solid #ff8000;
 }
 
 #mode {
