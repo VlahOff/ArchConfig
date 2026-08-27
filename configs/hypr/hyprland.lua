@@ -10,19 +10,19 @@
 
 -- Turbo-X Nemesis 49" - TOP
 hl.monitor({
-    output = "DP-2",
+    output = "DP-1",
     mode = "5120x1440@120",
-    position = "0x-1440",
+    -- position = "0x-1440",
     scale = 1,
 })
 
 -- AOC 34" - BOTTOM
-hl.monitor({
-    output = "DP-1",
-    mode = "3440x1440@180",
-    position = "840x0",
-    scale = 1,
-})
+-- hl.monitor({
+--     output = "DP-1",
+--     mode = "3440x1440@180",
+--     position = "840x0",
+--     scale = 1,
+-- })
 
 -------------------
 --  MY PROGRAMS  --
@@ -489,8 +489,8 @@ hl.window_rule({
     },
     opacity = "0.8 0.8"
 })
-hl.workspace_rule({
-    workspace = "10",
-    monitor = "DP-2",
-    default = true
-})
+-- hl.workspace_rule({
+--     workspace = "10",
+--     monitor = "DP-2",
+--     default = true
+-- })
