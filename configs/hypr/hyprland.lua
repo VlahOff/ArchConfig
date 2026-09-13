@@ -7,22 +7,22 @@
 --     position = "-1920x0",
 --     scale = 1
 -- })
+-- 34" 3440x1440 monitor - portrait on the left
+hl.monitor({
+    output = "DP-2",
+    mode = "3440x1440@180",
+    position = "0x0",
+    scale = 1,
+    transform = 1
+})
 
--- Turbo-X Nemesis 49" - TOP
+-- 49" 5120x1440 monitor - landscape on the right
 hl.monitor({
     output = "DP-1",
     mode = "5120x1440@120",
-    -- position = "0x-1440",
-    scale = 1,
+    position = "1440x1400",
+    scale = 1
 })
-
--- AOC 34" - BOTTOM
--- hl.monitor({
---     output = "DP-1",
---     mode = "3440x1440@180",
---     position = "840x0",
---     scale = 1,
--- })
 
 -------------------
 --  MY PROGRAMS  --
@@ -56,6 +56,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste -t text --watch clipman store --no-persist")
     hl.exec_cmd("xrandr --output DP-1 --primary")
     hl.exec_cmd("blueman-applet")
+    hl.exec_cmd("zsh -ic 'lmstart'")
 end)
 
 -- Preserve old `exec =` behavior: restart Waybar after config reloads too.
@@ -489,8 +490,8 @@ hl.window_rule({
     },
     opacity = "0.8 0.8"
 })
--- hl.workspace_rule({
---     workspace = "10",
---     monitor = "DP-2",
---     default = true
--- })
+hl.workspace_rule({
+    workspace = "10",
+    monitor = "DP-2",
+    default = true
+})
