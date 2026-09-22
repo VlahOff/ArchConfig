@@ -11,7 +11,7 @@
 hl.monitor({
     output = "DP-2",
     mode = "3440x1440@180",
-    position = "0x0",
+    position = "-1440x-1510",
     scale = 1,
     transform = 1
 })
@@ -19,9 +19,10 @@ hl.monitor({
 -- 49" 5120x1440 monitor - landscape on the right
 hl.monitor({
     output = "DP-1",
-    mode = "5120x1440@120",
-    position = "1440x1400",
-    scale = 1
+    mode = "5120x1440@119.99",
+    position = "0x0",
+    scale = 1,
+    transform = 0
 })
 
 -------------------
