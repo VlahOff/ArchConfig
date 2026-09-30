@@ -42,15 +42,15 @@ prompt_yes_no() {
 		read -rp "$prompt_message (y/n): " response
 
 		case "$response" in
-			[Yy])
-				return 0
-				;;
-			[Nn])
-				return 1
-				;;
-			*)
-				echo "Please answer y or n."
-				;;
+		[Yy])
+			return 0
+			;;
+		[Nn])
+			return 1
+			;;
+		*)
+			echo "Please answer y or n."
+			;;
 		esac
 	done
 }
@@ -584,6 +584,19 @@ repo_pkgs=(
 	ripgrep
 	wine
 	wlr-randr
+	bind
+	bluez-utils
+	dmidecode
+	ggml-vulkan
+	inxi
+	llama-cpp
+	nvme-cli
+	samba
+	shfmt
+	spirv-headers
+	unrar
+	vulkan-radeon
+	xorg-xhost
 )
 
 amd_monitoring_pkgs=(
@@ -655,42 +668,42 @@ yay -Syu --needed "${aur_pkgs[@]}"
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 apps=(
-	com.github.tchx84.Flatseal
-	io.github.flattool.Warehouse
-	it.mijorus.gearlever
-	org.flathub.flatpak-external-data-checker
+	io.github.ebonjaeger.bluejay
 	org.gnome.Calendar
+	org.mozilla.firefox
+	com.github.tchx84.Flatseal
+	it.mijorus.gearlever
 	org.gnome.Loupe
 	org.gnome.meld
-	org.gtk.Gtk3theme.Adwaita-dark
-	org.mozilla.firefox
-	org.pulseaudio.pavucontrol
 	org.videolan.VLC
+	org.pulseaudio.pavucontrol
+	io.github.flattool.Warehouse
+	org.flathub.flatpak-external-data-checker
+	org.gtk.Gtk3theme.Adwaita-dark
 )
 
 apps2=(
 	com.anydesk.Anydesk
-	com.rustdesk.RustDesk
+	org.blender.Blender
+	com.usebruno.Bruno
 	com.discordapp.Discord
-	com.github.PintaProject.Pinta
+	io.github.shiftey.Desktop
+	org.gimp.GIMP
 	com.google.Chrome
+	fr.handbrake.ghb
+	org.inkscape.Inkscape
 	com.microsoft.Edge
+	io.missioncenter.MissionCenter
 	com.mongodb.Compass
+	org.onlyoffice.desktopeditors
+	com.github.PintaProject.Pinta
+	net.davidotek.pupgui2
+	com.rustdesk.RustDesk
 	com.spotify.Client
 	com.transmissionbt.Transmission
 	com.viber.Viber
+	com.vscodium.codium
 	eu.codepoems.xl-converter
-	fr.handbrake.ghb
-	io.github.shiftey.Desktop
-	io.missioncenter.MissionCenter
-	net.davidotek.pupgui2
-	org.blender.Blender
-	org.gimp.GIMP
-	org.gnome.gThumb
-	org.onlyoffice.desktopeditors
-	rest.insomnia.Insomnia
-	org.telegram.desktop
-	org.inkscape.Inkscape
 )
 
 if prompt_yes_no "Do you want to install full or minimal flatpaks (y=full | n=minimal)"; then
