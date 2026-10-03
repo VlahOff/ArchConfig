@@ -57,7 +57,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste -t text --watch clipman store --no-persist")
     hl.exec_cmd("xrandr --output DP-1 --primary")
     hl.exec_cmd("blueman-applet")
-    hl.exec_cmd("zsh -ic 'lmstart'")
+    hl.exec_cmd("zsh -ic 'llama-start'")
 end)
 
 -- Preserve old `exec =` behavior: restart Waybar after config reloads too.
