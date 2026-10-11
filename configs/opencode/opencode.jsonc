@@ -1,0 +1,66 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "enabled_providers": [
+    "local-llamacpp"
+  ],
+  // Default model
+  "model": "local-llamacpp/swift-1.5-qwen3.8-27b",
+  "subagent_depth": 1,
+  "lsp": true,
+  "mcp": {
+    "searxng": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "mcp-searxng"
+      ],
+      "enabled": true,
+      "environment": {
+        "SEARXNG_URL": "http://192.168.1.69:8080"
+      },
+      "timeout": 10000
+    }
+  },
+  "provider": {
+    "local-llamacpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llama.cpp",
+      "options": {
+        "baseURL": "http://192.168.1.169:8080/v1",
+      },
+      "models": {
+        "qwen3.6-35b-a3b": {
+          "name": "Qwen3.6 35B A3B",
+          "limit": {
+            "context": 131072,
+            "output": 16000
+          },
+          "compatibility": {
+            "reasoningField": "reasoning_content"
+          }
+        },
+        "qwen3.8-27b": {
+          "name": "Qwen3.8 27B",
+          "limit": {
+            "context": 131072,
+            "output": 16000
+          },
+          "compatibility": {
+            "reasoningField": "reasoning_content"
+          }
+        },
+        "swift-1.5-qwen3.8-27b": {
+          "name": "Qwen3.8 27B - Swift 1.5",
+          "limit": {
+            "context": 131072,
+            "output": 16000
+          },
+          "compatibility": {
+            "reasoningField": "reasoning_content"
+          }
+        }
+      }
+    }
+  }
+}

@@ -57,7 +57,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste -t text --watch clipman store --no-persist")
     hl.exec_cmd("xrandr --output DP-1 --primary")
     hl.exec_cmd("blueman-applet")
-    hl.exec_cmd("zsh -ic 'llama-start'")
+    hl.exec_cmd("zsh -ic 'cd /home/vlahoff/Code/llama-cpp-dashboard && npm start'")
 end)
 
 -- Preserve old `exec =` behavior: restart Waybar after config reloads too.
@@ -268,6 +268,59 @@ hl.device({
     sensitivity = -0.5
 })
 
+--------------------------
+--  EQUALIZE WINDOWS  --
+--------------------------
+
+-- Resize the tiled windows in the focused workspace into N equal columns.
+local function equalize_workspace()
+    local mon = hl.get_active_monitor()
+    if mon == nil then
+        return
+    end
+
+    local windows = hl.get_windows({
+        workspace = mon.active_workspace,
+        floating = false
+    })
+    local list = {}
+    for i = 1, #windows do
+        local w = windows[i]
+        if w.visible and w.fullscreen == 0 then
+            table.insert(list, w)
+        end
+    end
+
+    table.sort(list, function(a, b)
+        if a.at.x ~= b.at.x then
+            return a.at.x < b.at.x
+        end
+        return a.at.y < b.at.y
+    end)
+
+    local n = #list
+    if n < 2 then
+        return
+    end
+
+    local prev = hl.get_active_window()
+    local col = math.floor(mon.width / n)
+    for i = 1, n - 1 do
+        hl.dispatch(hl.dsp.focus({
+            window = list[i]
+        }))
+        hl.dispatch(hl.dsp.window.resize({
+            x = col,
+            y = mon.height
+        }))
+    end
+    if prev ~= nil then
+        hl.dispatch(hl.dsp.focus({
+            window = prev
+        }))
+    end
+end
+
 ------------------
 --  KEYBINDINGS --
 ------------------
@@ -287,6 +340,7 @@ hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(menu))
 -- hl.bind(mainMod .. " + P", hl.dsp.window.pseudo()) -- dwindle
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle
+hl.bind(mainMod .. " + G", equalize_workspace)
 
 -- Lock and turn DPMS off after 1 second.
 hl.bind(mainMod .. " + L", function()
