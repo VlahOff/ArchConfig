@@ -159,6 +159,12 @@ hl.layer_rule({
 })
 hl.layer_rule({
     match = {
+        namespace = "notifications"
+    },
+    blur = true
+})
+hl.layer_rule({
+    match = {
         namespace = "rofi"
     },
     blur = true
@@ -272,8 +278,8 @@ hl.device({
 --  EQUALIZE WINDOWS  --
 --------------------------
 
--- Arrange any odd number of tiled dwindle windows into equal columns or rows.
-local function equalize_workspace()
+-- Arrange tiled dwindle windows into columns or rows, optionally by weight.
+local function arrange_workspace(weights)
     local mon = hl.get_active_monitor()
     local workspace = hl.get_active_special_workspace() or hl.get_active_workspace()
     if mon == nil or workspace == nil or workspace.has_fullscreen then
@@ -301,7 +307,11 @@ local function equalize_workspace()
     end
 
     local n = #list
-    if n < 3 or n % 2 == 0 then
+    if weights ~= nil then
+        if n ~= #weights then
+            return
+        end
+    elseif n < 3 or n % 2 == 0 then
         return
     end
     table.sort(list, function(a, b)
@@ -310,6 +320,11 @@ local function equalize_workspace()
         end
         return a.at[cross_axis] < b.at[cross_axis]
     end)
+
+    local cumulative_weight = { [0] = 0 }
+    for i = 1, n do
+        cumulative_weight[i] = cumulative_weight[i - 1] + (weights and weights[i] or 1)
+    end
 
     local prev = hl.get_active_window()
     local use_active = hl.get_config("dwindle.use_active_for_splits")
@@ -341,7 +356,7 @@ local function equalize_workspace()
         end
         hl.dispatch(hl.dsp.window.float({ window = list[1], action = "disable" }))
         local full_size = list[1].size[axis]
-        local gap_cost, target_size
+        local gap_cost, unit_size
         local function arrange(first, last)
             local count = last - first + 1
             if count < 2 then
@@ -355,10 +370,11 @@ local function equalize_workspace()
             if gap_cost == nil then
                 -- Every added divider consumes this much client space.
                 gap_cost = full_size - list[first].size[axis] - list[middle].size[axis]
-                target_size = (full_size - (n - 1) * gap_cost) / n
+                unit_size = (full_size - (n - 1) * gap_cost) / cumulative_weight[n]
             end
             -- A subtree's placeholder includes the space its future dividers need.
-            fit_size(list[first], left_count * target_size + (left_count - 1) * gap_cost)
+            local left_weight = cumulative_weight[middle - 1] - cumulative_weight[first - 1]
+            fit_size(list[first], left_weight * unit_size + (left_count - 1) * gap_cost)
             arrange(first, middle - 1)
             arrange(middle, last)
         end
@@ -381,6 +397,16 @@ local function equalize_workspace()
     end
 end
 
+-- Arrange any odd number of tiled windows into equal columns or rows.
+local function equalize_workspace()
+    arrange_workspace()
+end
+
+-- With exactly three tiled windows, give the middle one half the client space.
+local function center_workspace()
+    arrange_workspace({ 1, 2, 1 })
+end
+
 ------------------
 --  KEYBINDINGS --
 ------------------
@@ -401,6 +427,7 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(menu))
 -- hl.bind(mainMod .. " + P", hl.dsp.window.pseudo()) -- dwindle
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle
 hl.bind(mainMod .. " + G", equalize_workspace)
+hl.bind(mainMod .. " + SHIFT + G", center_workspace)
 
 -- Lock and turn DPMS off after 1 second.
 hl.bind(mainMod .. " + L", function()

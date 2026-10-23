@@ -502,101 +502,107 @@ pacman_remove_installed_only "${remove_pkgs[@]}"
 
 # Repo packages
 repo_pkgs=(
-	ufw
-	virt-manager
-	virt-viewer
-	qemu-full
-	libvirt
+	base-devel
+	bind
+	bleachbit
+	blueman
+	bluez-utils
+	brightnessctl
+	btop
+	cantarell-fonts
+	chromium
+	clamav
+	cmake
+	cronie
+	cups
+	curl
+	dmidecode
 	dnsmasq
-	iptables
-	edk2-ovmf
-	swtpm
 	docker
 	docker-compose
-	base-devel
-	git
-	curl
-	ncdu
-	btop
-	htop
-	tldr
-	zsh
-	sqlite
-	util-linux
-	gnome-tweaks
-	gparted
+	edk2-ovmf
+	fastfetch
 	file-roller
-	network-manager-applet
-	blueman
-	lxappearance
-	mako
-	waybar
-	rofi
-	xdg-desktop-portal-hyprland
-	hyprpaper
+	flatpak
+	fontconfig
+	gamemode
+	gamescope
+	ggml-vulkan
+	git
+	github-cli
+	gnome-themes-extra
+	gnome-tweaks
+	goverlay
+	gparted
+	grim
+	hplip
+	htop
 	hypridle
 	hyprlock
-	hyprpolkitagent
+	hyprpaper
 	hyprpicker
-	solaar
-	gnome-themes-extra
+	hyprpolkitagent
+	inxi
+	iptables
+	jq
+	libvirt
+	llama-cpp
+	lxappearance
+	mako
+	man-db
+	man-pages
+	mangohud
+	mesa-demos
+	ncdu
+	nemo
+	neovim
+	network-manager-applet
+	networkmanager
+	noto-fonts-cjk
+	nvme-cli
+	openssh
+	otf-font-awesome
 	powertop
-	brightnessctl
-	fastfetch
-	fontconfig
+	python-pip
+	qemu-full
+	reflector
+	ripgrep
+	rofi
+	samba
+	shfmt
+	slurp
+	solaar
+	spirv-headers
+	sqlite
+	steam
+	swtpm
+	tesseract
+	tesseract-data-bul
+	timeshift
+	tldr
+	tmux
 	ttf-fira-code
 	ttf-firacode-nerd
 	ttf-jetbrains-mono
 	ttf-jetbrains-mono-nerd
-	woff2-font-awesome
-	otf-font-awesome
-	grim
-	hplip
-	mangohud
-	goverlay
-	gamescope
-	steam
-	github-cli
-	timeshift
-	bleachbit
-	flatpak
-	networkmanager
-	noto-fonts-cjk
-	cantarell-fonts
-	openssh
-	vulkan-tools
-	mesa-demos
-	gamemode
-	neovim
-	cronie
-	man-db
-	man-pages
-	slurp
-	tesseract
-	wl-clipboard
-	tesseract-data-bul
-	nemo
-	clamav
-	cups
-	jq
-	python-pip
-	reflector
-	ripgrep
-	wine
-	wlr-randr
-	bind
-	bluez-utils
-	dmidecode
-	ggml-vulkan
-	inxi
-	llama-cpp
-	nvme-cli
-	samba
-	shfmt
-	spirv-headers
+	ttf-liberation
+	ufw
 	unrar
+	util-linux
+	v4l-utils
+	vi
+	virt-manager
+	virt-viewer
 	vulkan-radeon
+	vulkan-tools
+	waybar
+	wine
+	wl-clipboard
+	wlr-randr
+	woff2-font-awesome
+	xdg-desktop-portal-hyprland
 	xorg-xhost
+	zsh
 )
 
 amd_monitoring_pkgs=(
@@ -704,6 +710,8 @@ apps2=(
 	com.viber.Viber
 	com.vscodium.codium
 	eu.codepoems.xl-converter
+	one.ablaze.floorp
+	app.zen_browser.zen
 )
 
 if prompt_yes_no "Do you want to install full or minimal flatpaks (y=full | n=minimal)"; then

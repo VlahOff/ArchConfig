@@ -1,47 +1,82 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "enabled_providers": [
-    "local-llamacpp"
-  ],
-  // Default model
+  // Default local model
   "model": "local-llamacpp/swift-1.5-qwen3.8-27b",
-  "subagent_depth": 1,
-  "lsp": true,
-  "mcp": {
-    "searxng": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "mcp-searxng"
-      ],
-      "enabled": true,
-      "environment": {
-        "SEARXNG_URL": "http://192.168.1.69:8080"
-      },
-      "timeout": 10000
+  "default_agent": "developer",
+  "agents": {
+    "build": {
+      "disabled": true
+    },
+    "plan": {
+      "disabled": true
     }
   },
-  "provider": {
+  // Subagent nesting and local-only provider policy
+  "experimental": {
+    "subagent_depth": 1,
+    "policies": [
+      {
+        "action": "provider.use",
+        "resource": "*",
+        "effect": "deny"
+      },
+      {
+        "action": "provider.use",
+        "resource": "local-llamacpp",
+        "effect": "allow"
+      }
+    ]
+  },
+  // MCP servers
+  "mcp": {
+    "servers": {
+      "searxng": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "mcp-searxng"
+        ],
+        "disabled": false,
+        "codemode": false,
+        "environment": {
+          "SEARXNG_URL": "http://192.168.1.69:8080"
+        },
+        "timeout": {
+          "catalog": 10000,
+          "execution": 30000
+        }
+      },
+      "playwright": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@playwright/mcp@latest",
+          "--headless",
+          "--executable-path",
+          "/usr/bin/chromium"
+        ],
+        "disabled": false,
+        "codemode": true,
+        "timeout": {
+          "catalog": 30000,
+          "execution": 120000
+        }
+      }
+    }
+  },
+  // Local llama.cpp provider
+  "providers": {
     "local-llamacpp": {
-      "npm": "@ai-sdk/openai-compatible",
+      "package": "aisdk:@ai-sdk/openai-compatible",
       "name": "llama.cpp",
-      "options": {
-        "baseURL": "http://192.168.1.169:8080/v1",
+      "settings": {
+        "baseURL": "http://192.168.1.169:8080/v1"
       },
       "models": {
         "qwen3.6-35b-a3b": {
           "name": "Qwen3.6 35B A3B",
-          "limit": {
-            "context": 131072,
-            "output": 16000
-          },
-          "compatibility": {
-            "reasoningField": "reasoning_content"
-          }
-        },
-        "qwen3.8-27b": {
-          "name": "Qwen3.8 27B",
           "limit": {
             "context": 131072,
             "output": 16000
@@ -56,9 +91,78 @@
             "context": 131072,
             "output": 16000
           },
+          "capabilities": {
+            "tools": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
           "compatibility": {
             "reasoningField": "reasoning_content"
-          }
+          },
+          "settings": {
+            "reasoningEffort": "medium"
+          },
+          "body": {
+            "chat_template_kwargs": {
+              "enable_thinking": true,
+              "reasoning_effort": "medium"
+            }
+          },
+          "variants": [
+            {
+              "id": "off",
+              "settings": {
+                "reasoningEffort": "none"
+              },
+              "body": {
+                "chat_template_kwargs": {
+                  "enable_thinking": false,
+                  "reasoning_effort": "none"
+                }
+              }
+            },
+            {
+              "id": "low",
+              "settings": {
+                "reasoningEffort": "low"
+              },
+              "body": {
+                "chat_template_kwargs": {
+                  "enable_thinking": true,
+                  "reasoning_effort": "low"
+                }
+              }
+            },
+            {
+              "id": "medium",
+              "settings": {
+                "reasoningEffort": "medium"
+              },
+              "body": {
+                "chat_template_kwargs": {
+                  "enable_thinking": true,
+                  "reasoning_effort": "medium"
+                }
+              }
+            },
+            {
+              "id": "xhigh",
+              "settings": {
+                "reasoningEffort": "xhigh"
+              },
+              "body": {
+                "chat_template_kwargs": {
+                  "enable_thinking": true,
+                  "reasoning_effort": "xhigh"
+                }
+              }
+            }
+          ]
         }
       }
     }

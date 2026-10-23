@@ -1,10 +1,35 @@
-# Colors
+# --- Glass design (glassmorphism) ---
+# mako has no true blur, so glass = translucent surface + light edge + rounded corners
 
-background-color=#303446
+font=Roboto 11
+max-icon-size=48
+icon-border-radius=12
+
+# Geometry
+width=480
+height=180
+outer-margin=12
+margin=10
+padding=12
+max-visible=5
+
+# Glass surface: semi-transparent deep blue (alpha 0x73 ~ 45%)
+background-color=#24283b73
+# Light-catching edge (white at ~24% alpha)
+border-color=#ffffff3d
+border-size=1
+border-radius=6
+
 text-color=#c6d0f5
-border-color=#8caaee
-progress-color=over #414559
+progress-color=over #8caaee99
+
 default-timeout=15000
 
-[urgency=high]
-border-color=#ef9f76
+[urgency=critical]
+border-color=#ef9f76cc
+progress-color=over #ef9f76cc
+
+[urgency=low]
+background-color=#24283b59
+text-color=#9aa5ce
+default-timeout=0
