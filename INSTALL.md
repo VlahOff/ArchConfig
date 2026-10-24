@@ -19,8 +19,27 @@ continue. For the AnyDesk timeout during Flatpak installation:
 ```
 
 The stages, in order, are `system`, `packages`, `services`, `aur`, `flatpak`,
-`appimages`, `configs`, and `shell`. Choose a later stage only when the earlier
+`appimages`, `configs`, `shell`, and `grub`. Choose a later stage only when the earlier
 stages have already been completed on that machine.
+
+The final GRUB stage updates an existing `/etc/default/grub` with:
+
+```ini
+GRUB_DEFAULT=saved
+GRUB_SAVEDEFAULT=true
+GRUB_TIMEOUT_STYLE=menu
+GRUB_TIMEOUT=5
+GRUB_DISABLE_BOOTNEXT=true
+```
+
+It backs up the defaults and existing `/boot/grub/grub.cfg`, then regenerates the
+menu using `grub-mkconfig`. If generation fails, the previous files are restored
+and the stage remains available to resume. Systems without an existing GRUB setup
+are skipped. To apply just this stage after updating the installer:
+
+```sh
+./install-archV6.sh --from grub
+```
 
 Each Flatpak is installed separately, with up to three attempts and a five-second
 delay between attempts. After repeated failure, choose **r** to retry, **s** to

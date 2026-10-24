@@ -46,7 +46,7 @@ With no options, resume an interrupted run or start a new installation.
   --from STAGE   Start at a chosen stage, including failures from older scripts.
   --help         Show this help without changing the system.
 
-Stages: system packages services aur flatpak appimages configs shell
+Stages: system packages services aur flatpak appimages configs shell grub
 Example: ./install-archV6.sh --from flatpak
 EOF
 }
@@ -58,6 +58,97 @@ save_checkpoint() {
 		trap 'rm -f -- "$tmp"' EXIT
 		printf '%s\n' "$1" >"$tmp"
 		mv -- "$tmp" "$STATE_DIR/next-stage"
+	)
+}
+
+configure_grub() {
+	local grub_defaults="${1:-/etc/default/grub}"
+	local grub_config="${2:-/boot/grub/grub.cfg}"
+
+	if [[ ! -f "$grub_defaults" || ! -d "$(dirname -- "$grub_config")" ]]; then
+		echo "No existing GRUB installation found; skipping GRUB settings."
+		return 0
+	fi
+	if ! need_cmd grub-mkconfig; then
+		echo "❌ GRUB configuration exists but grub-mkconfig is unavailable." >&2
+		return 1
+	fi
+
+	# Follow configuration symlinks rather than replacing the links themselves.
+	grub_defaults="$(readlink -f -- "$grub_defaults")"
+	grub_config="$(readlink -f -- "$grub_config")"
+	(
+		local tmp candidate="" defaults_backup config_backup="" exit_code
+		tmp="$(mktemp)"
+		trap 'rm -f -- "$tmp"; if [[ -n "$candidate" ]]; then sudo rm -f -- "$candidate"; fi' EXIT
+
+		sudo awk '
+      BEGIN {
+        count = split("GRUB_DEFAULT GRUB_SAVEDEFAULT GRUB_TIMEOUT_STYLE GRUB_TIMEOUT GRUB_DISABLE_BOOTNEXT", keys, " ")
+        values["GRUB_DEFAULT"] = "saved"
+        values["GRUB_SAVEDEFAULT"] = "true"
+        values["GRUB_TIMEOUT_STYLE"] = "menu"
+        values["GRUB_TIMEOUT"] = "5"
+        values["GRUB_DISABLE_BOOTNEXT"] = "true"
+      }
+      {
+        assignment = $0
+        sub(/^[[:space:]]*#?[[:space:]]*/, "", assignment)
+        sub(/^export[[:space:]]+/, "", assignment)
+        key = assignment
+        sub(/[[:space:]]*=.*/, "", key)
+        if (key in values && assignment ~ /^[A-Z_]+[[:space:]]*=/) {
+          value = assignment
+          sub(/^[^=]*=[[:space:]]*/, "", value)
+          # Refuse compound shell statements rather than discarding user code.
+          if (value !~ /^("[^"]*"|\047[^\047]*\047|[[:alnum:]_.+-]*)[[:space:]]*(#.*)?$/) {
+            print "Unsupported compound assignment for " key "; leaving GRUB files unchanged." > "/dev/stderr"
+            invalid = 1
+            next
+          }
+          if (!written[key]++) {
+            print key "=" values[key]
+          }
+          next
+        }
+        print
+      }
+      END {
+        if (invalid) exit 1
+        for (i = 1; i <= count; i++) {
+          if (!written[keys[i]]) print keys[i] "=" values[keys[i]]
+        }
+      }
+    ' "$grub_defaults" >"$tmp"
+		sh -n "$tmp"
+		defaults_backup="$(sudo mktemp "${grub_defaults}.pre-archconfig-v6.XXXXXX")"
+		sudo cp -p -- "$grub_defaults" "$defaults_backup"
+		echo "Backed up GRUB defaults to $defaults_backup."
+		if [[ -f "$grub_config" ]]; then
+			config_backup="$(sudo mktemp "${grub_config}.pre-archconfig-v6.XXXXXX")"
+			sudo cp -p -- "$grub_config" "$config_backup"
+			echo "Backed up the GRUB menu to $config_backup."
+		fi
+
+		candidate="$(sudo mktemp "${grub_defaults}.v6.XXXXXX")"
+		sudo cp -p -- "$grub_defaults" "$candidate"
+		sudo tee "$candidate" <"$tmp" >/dev/null
+		sudo mv -- "$candidate" "$grub_defaults"
+		candidate=""
+
+		if sudo grub-mkconfig -o "$grub_config"; then
+			echo "Configured saved GRUB selection, a 5-second menu, and GRUB_DISABLE_BOOTNEXT=true."
+		else
+			exit_code="$?"
+			sudo cp -p -- "$defaults_backup" "$grub_defaults"
+			if [[ -n "$config_backup" ]]; then
+				sudo cp -p -- "$config_backup" "$grub_config"
+			else
+				sudo rm -f -- "$grub_config"
+			fi
+			echo "❌ GRUB menu generation failed; restored the previous GRUB files." >&2
+			return "$exit_code"
+		fi
 	)
 }
 
@@ -961,8 +1052,12 @@ stage_shell() {
 	install_post_install_shell_tools
 }
 
+stage_grub() {
+	configure_grub
+}
+
 # ---------- main ----------
-INSTALL_STAGES=(system packages services aur flatpak appimages configs shell)
+INSTALL_STAGES=(system packages services aur flatpak appimages configs shell grub)
 requested_stage=""
 CURRENT_STAGE=""
 while (($#)); do

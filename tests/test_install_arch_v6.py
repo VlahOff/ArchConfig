@@ -5,6 +5,7 @@ Run with: python3 -m unittest discover -s tests -v
 
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -264,6 +265,7 @@ yay() { audit_log yay "$@"; }
 flatpak() { audit_log flatpak "$@"; }
 install_appimages() { audit_log appimages; }
 install_post_install_shell_tools() { audit_log shell-setup; }
+configure_grub() { audit_log grub-setup; }
 curl() { echo 'Unexpected network request' >&2; exit 44; }
 git() { echo 'Unexpected Git operation' >&2; exit 45; }
 '''
@@ -303,7 +305,164 @@ git() { echo 'Unexpected Git operation' >&2; exit 45; }
                         (self.home / ".config" / item).resolve(),
                         self.repo / profile / item,
                     )
-                self.assertEqual(calls[-1], "shell-setup")
+                self.assertEqual(calls[-2:], ["shell-setup", "grub-setup"])
+
+    def grub_fixture(self):
+        defaults = self.root / "etc/default/grub"
+        config = self.root / "boot/grub/grub.cfg"
+        defaults.parent.mkdir(parents=True)
+        config.parent.mkdir(parents=True)
+        defaults.write_text(
+            "# Preserve this comment and the kernel command line\n"
+            "GRUB_DEFAULT=0\n"
+            "#GRUB_SAVEDEFAULT=false\n"
+            'GRUB_TIMEOUT_STYLE="hidden"\n'
+            "GRUB_TIMEOUT=0\n"
+            "export GRUB_TIMEOUT=9 # Duplicate setting\n"
+            "# GRUB_DISABLE_BOOTNEXT=false\n"
+            'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"\n'
+        )
+        config.write_text("previous boot menu\n")
+        defaults.chmod(0o640)
+        config.chmod(0o600)
+        return defaults, config
+
+    def grub_stubs(self):
+        return r'''
+sudo() {
+    printf '%s\n' "$*" >> "$AUDIT_ROOT/grub-commands"
+    case "$1" in
+        awk|mktemp|cp|tee|mv|rm|grub-mkconfig) "$@" ;;
+        *) echo "Unexpected privileged operation: $1" >&2; exit 42 ;;
+    esac
+}
+grub-mkconfig() {
+    [[ "$1" == -o ]] || exit 43
+    sh -c '. "$1"; printf "%s\n" "$GRUB_DEFAULT" "$GRUB_SAVEDEFAULT" "$GRUB_TIMEOUT_STYLE" "$GRUB_TIMEOUT" "$GRUB_DISABLE_BOOTNEXT"' \
+        fixture "$AUDIT_ROOT/etc/default/grub" > "$AUDIT_ROOT/grub-values-seen"
+    printf 'new boot menu\n' > "$2"
+    return "${GRUB_FIXTURE_STATUS:-0}"
+}
+'''
+
+    def configure_fixture_grub(self, prefix=""):
+        return self.bash(
+            self.grub_stubs()
+            + prefix
+            + '\nconfigure_grub "$AUDIT_ROOT/etc/default/grub" "$AUDIT_ROOT/boot/grub/grub.cfg"'
+        )
+
+    def test_grub_applies_all_five_settings_preserves_other_options_and_backs_up(self):
+        defaults, config = self.grub_fixture()
+        original = defaults.read_text()
+        original_menu = config.read_text()
+        result = self.configure_fixture_grub()
+        self.assert_success(result)
+        expected = {
+            "GRUB_DEFAULT": "saved",
+            "GRUB_SAVEDEFAULT": "true",
+            "GRUB_TIMEOUT_STYLE": "menu",
+            "GRUB_TIMEOUT": "5",
+            "GRUB_DISABLE_BOOTNEXT": "true",
+        }
+        configured = defaults.read_text()
+        for key, value in expected.items():
+            self.assertEqual(re.findall(rf"^{key}=(.*)$", configured, re.M), [value])
+        self.assertIn('GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"', configured)
+        self.assertIn("# Preserve this comment and the kernel command line", configured)
+        self.assertEqual((self.root / "grub-values-seen").read_text().splitlines(), list(expected.values()))
+        self.assertEqual(next(defaults.parent.glob("grub.pre-archconfig-v6.*")).read_text(), original)
+        self.assertEqual(next(config.parent.glob("grub.cfg.pre-archconfig-v6.*")).read_text(), original_menu)
+        self.assertEqual(config.read_text(), "new boot menu\n")
+        self.assertEqual(defaults.stat().st_mode & 0o777, 0o640)
+        self.assertEqual(config.stat().st_mode & 0o777, 0o600)
+        self.assert_success(self.configure_fixture_grub())
+        self.assertEqual(defaults.read_text(), configured)
+        self.assertEqual(list(defaults.parent.glob("grub.v6.*")), [])
+
+    def test_grub_adds_missing_settings_without_replacing_config_symlinks(self):
+        defaults, config = self.grub_fixture()
+        defaults.write_text('GRUB_CMDLINE_LINUX_DEFAULT="quiet"\n')
+        defaults_target = defaults.with_name("real-defaults")
+        config_target = config.with_name("real-menu.cfg")
+        defaults.rename(defaults_target)
+        config.rename(config_target)
+        defaults.symlink_to(defaults_target)
+        config.symlink_to(config_target)
+        self.assert_success(self.configure_fixture_grub())
+        self.assertTrue(defaults.is_symlink())
+        self.assertTrue(config.is_symlink())
+        self.assertIn("GRUB_DISABLE_BOOTNEXT=true\n", defaults_target.read_text())
+        self.assertEqual(config_target.read_text(), "new boot menu\n")
+        self.assertEqual(
+            (self.root / "grub-values-seen").read_text().splitlines(),
+            ["saved", "true", "menu", "5", "true"],
+        )
+
+    def test_grub_generation_failure_restores_defaults_and_existing_menu(self):
+        defaults, config = self.grub_fixture()
+        original = defaults.read_bytes()
+        menu = config.read_bytes()
+        result = self.configure_fixture_grub("GRUB_FIXTURE_STATUS=25\n")
+        self.assertEqual(result.returncode, 25, result.stdout + result.stderr)
+        self.assertIn("restored the previous GRUB files", result.stderr)
+        self.assertEqual(defaults.read_bytes(), original)
+        self.assertEqual(config.read_bytes(), menu)
+        self.assertEqual(defaults.stat().st_mode & 0o777, 0o640)
+        self.assertEqual(config.stat().st_mode & 0o777, 0o600)
+
+    def test_grub_generation_failure_removes_menu_that_did_not_previously_exist(self):
+        defaults, config = self.grub_fixture()
+        config.unlink()
+        original = defaults.read_bytes()
+        result = self.configure_fixture_grub("GRUB_FIXTURE_STATUS=25\n")
+        self.assertEqual(result.returncode, 25, result.stdout + result.stderr)
+        self.assertEqual(defaults.read_bytes(), original)
+        self.assertFalse(config.exists())
+
+    def test_grub_invalid_or_compound_settings_leave_original_files_unchanged(self):
+        defaults, config = self.grub_fixture()
+        for original in (
+            "GRUB_TIMEOUT=0; echo PRESERVE_THIS_COMMAND\n",
+            "GRUB_DEFAULT=0 echo PRESERVE_THIS_COMMAND\n",
+            'GRUB_CMDLINE_LINUX_DEFAULT="unterminated\n',
+        ):
+            with self.subTest(original=original):
+                defaults.write_text(original)
+                result = self.configure_fixture_grub()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(defaults.read_text(), original)
+                self.assertEqual(config.read_text(), "previous boot menu\n")
+                self.assertFalse((self.root / "grub-values-seen").exists())
+                self.assertEqual(list(defaults.parent.glob("grub.pre-archconfig-v6.*")), [])
+
+    def test_grub_skips_non_grub_system_and_requires_tools_when_configured(self):
+        skipped = self.configure_fixture_grub()
+        self.assert_success(skipped)
+        self.assertIn("No existing GRUB installation", skipped.stdout)
+        self.assertFalse((self.root / "grub-commands").exists())
+        defaults, config = self.grub_fixture()
+        original = defaults.read_text()
+        missing = self.configure_fixture_grub("need_cmd() { return 1; }\n")
+        self.assertEqual(missing.returncode, 1)
+        self.assertIn("grub-mkconfig is unavailable", missing.stderr)
+        self.assertEqual(defaults.read_text(), original)
+        self.assertEqual(config.read_text(), "previous boot menu\n")
+
+    def test_grub_stage_can_be_run_directly_and_resumed_after_failure(self):
+        stubs = self.main_stubs()
+        first = self.bash(
+            stubs + "configure_grub() { audit_log grub-setup; return 25; }\n" + MAIN,
+            args=("--from", "grub"),
+        )
+        self.assertEqual(first.returncode, 25)
+        self.assertEqual(self.calls(), ["grub-setup"])
+        self.assertEqual(self.checkpoint().read_text(), "grub\n")
+        (self.root / "commands").unlink()
+        resumed = self.bash(stubs + MAIN)
+        self.assert_success(resumed)
+        self.assertEqual(self.calls(), ["grub-setup"])
+        self.assertEqual(self.checkpoint().read_text(), "complete\n")
 
     def test_failed_stage_stops_immediately_and_rerun_skips_completed_stages(self):
         stubs = self.main_stubs() + r'''
