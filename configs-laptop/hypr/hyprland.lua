@@ -39,6 +39,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("nm-applet")
     hl.exec_cmd("wl-paste -t text --watch clipman store --no-persist")
     hl.exec_cmd("xrandr --output eDP-1 --primary")
+    hl.exec_cmd("blueman-applet")
 end)
 
 -- Preserve old `exec =` behavior: restart Waybar after config reloads too.
@@ -135,6 +136,12 @@ hl.layer_rule({
 hl.layer_rule({
     match = {
         namespace = "waybar"
+    },
+    blur = true
+})
+hl.layer_rule({
+    match = {
+        namespace = "notifications"
     },
     blur = true
 })
@@ -249,6 +256,166 @@ hl.device({
     sensitivity = -0.5
 })
 
+--------------------------
+--  EQUALIZE WINDOWS  --
+--------------------------
+
+-- Arrange tiled dwindle windows into columns or rows, optionally by weight.
+local function arrange_workspace(weights)
+    local mon = hl.get_active_monitor()
+    local workspace = hl.get_active_special_workspace() or hl.get_active_workspace()
+    if mon == nil or workspace == nil or workspace.has_fullscreen then
+        return
+    end
+
+    -- The API reports unrotated pixels; quarter-turn transforms swap the axes.
+    local rotated = mon.transform % 2 == 1
+    local monitor_width = rotated and mon.height or mon.width
+    local monitor_height = rotated and mon.width or mon.height
+    local vertical = monitor_height > monitor_width
+    local axis = vertical and "y" or "x"
+    local cross_axis = vertical and "x" or "y"
+    local direction = vertical and "d" or "r"
+    local windows = hl.get_windows({
+        workspace = workspace,
+        floating = false
+    })
+    local list = {}
+    for i = 1, #windows do
+        local w = windows[i]
+        if w.visible and not w.hidden and w.fullscreen == 0 then
+            if not w.layout or w.layout.name ~= "dwindle" then
+                return
+            end
+            table.insert(list, w)
+        end
+    end
+
+    local n = #list
+    if weights ~= nil then
+        if n ~= #weights then
+            return
+        end
+    elseif n < 3 or n % 2 == 0 then
+        return
+    end
+    table.sort(list, function(a, b)
+        if a.at[axis] ~= b.at[axis] then
+            return a.at[axis] < b.at[axis]
+        end
+        return a.at[cross_axis] < b.at[cross_axis]
+    end)
+
+    local cumulative_weight = {
+        [0] = 0
+    }
+    for i = 1, n do
+        cumulative_weight[i] = cumulative_weight[i - 1] + (weights and weights[i] or 1)
+    end
+
+    local prev = hl.get_active_window()
+    local use_active = hl.get_config("dwindle.use_active_for_splits")
+    local function focus(w)
+        hl.dispatch(hl.dsp.focus({
+            window = w
+        }))
+    end
+    local function split_ratio(w, ratio)
+        focus(w)
+        hl.dispatch(hl.dsp.layout(string.format("splitratio %.9f exact", ratio)))
+    end
+    local function fit_size(w, target)
+        -- Sample live goal sizes to account for gaps, borders and reserved space.
+        split_ratio(w, 1)
+        local half_size = w.size[axis]
+        split_ratio(w, 0.5)
+        local slope = (half_size - w.size[axis]) / 0.5
+        if math.abs(slope) < 1 then
+            split_ratio(w, 1)
+            return
+        end
+        split_ratio(w, 1 + (target - half_size) / slope)
+    end
+
+    local ok, err = pcall(function()
+        hl.config({
+            dwindle = {
+                use_active_for_splits = true
+            }
+        })
+        -- Retile only these windows; preselection forces every split onto one axis.
+        for i = 1, n do
+            hl.dispatch(hl.dsp.window.float({
+                window = list[i],
+                action = "enable"
+            }))
+        end
+        hl.dispatch(hl.dsp.window.float({
+            window = list[1],
+            action = "disable"
+        }))
+        local full_size = list[1].size[axis]
+        local gap_cost, unit_size
+        local function arrange(first, last)
+            local count = last - first + 1
+            if count < 2 then
+                return
+            end
+            local middle = first + math.floor(count / 2)
+            local left_count = middle - first
+            focus(list[first])
+            hl.dispatch(hl.dsp.layout("preselect " .. direction))
+            hl.dispatch(hl.dsp.window.float({
+                window = list[middle],
+                action = "disable"
+            }))
+            if gap_cost == nil then
+                -- Every added divider consumes this much client space.
+                gap_cost = full_size - list[first].size[axis] - list[middle].size[axis]
+                unit_size = (full_size - (n - 1) * gap_cost) / cumulative_weight[n]
+            end
+            -- A subtree's placeholder includes the space its future dividers need.
+            local left_weight = cumulative_weight[middle - 1] - cumulative_weight[first - 1]
+            fit_size(list[first], left_weight * unit_size + (left_count - 1) * gap_cost)
+            arrange(first, middle - 1)
+            arrange(middle, last)
+        end
+        arrange(1, n)
+    end)
+
+    -- Also clean up after a Lua error so no temporarily floated windows are stranded.
+    hl.dispatch(hl.dsp.layout("preselect none"))
+    for i = 1, n do
+        if list[i].floating then
+            hl.dispatch(hl.dsp.window.float({
+                window = list[i],
+                action = "disable"
+            }))
+        end
+    end
+    hl.config({
+        dwindle = {
+            use_active_for_splits = use_active
+        }
+    })
+    if prev ~= nil then
+        focus(prev)
+    end
+    if not ok then
+        error(err)
+    end
+end
+
+-- Arrange any odd number of tiled windows into equal columns or rows.
+local function equalize_workspace()
+    arrange_workspace()
+end
+
+-- With exactly three tiled windows, give the middle one half the client space.
+local function center_workspace()
+    arrange_workspace({1, 2, 1})
+end
+
 ------------------
 --  KEYBINDINGS --
 ------------------
@@ -268,6 +435,8 @@ hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(menu))
 -- hl.bind(mainMod .. " + P", hl.dsp.window.pseudo()) -- dwindle
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle
+hl.bind(mainMod .. " + G", equalize_workspace)
+hl.bind(mainMod .. " + SHIFT + G", center_workspace)
 
 -- Lock and turn DPMS off after 1 second.
 hl.bind(mainMod .. " + L", function()

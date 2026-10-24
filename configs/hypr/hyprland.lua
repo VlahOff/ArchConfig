@@ -294,7 +294,10 @@ local function arrange_workspace(weights)
     local axis = vertical and "y" or "x"
     local cross_axis = vertical and "x" or "y"
     local direction = vertical and "d" or "r"
-    local windows = hl.get_windows({ workspace = workspace, floating = false })
+    local windows = hl.get_windows({
+        workspace = workspace,
+        floating = false
+    })
     local list = {}
     for i = 1, #windows do
         local w = windows[i]
@@ -321,7 +324,9 @@ local function arrange_workspace(weights)
         return a.at[cross_axis] < b.at[cross_axis]
     end)
 
-    local cumulative_weight = { [0] = 0 }
+    local cumulative_weight = {
+        [0] = 0
+    }
     for i = 1, n do
         cumulative_weight[i] = cumulative_weight[i - 1] + (weights and weights[i] or 1)
     end
@@ -329,7 +334,9 @@ local function arrange_workspace(weights)
     local prev = hl.get_active_window()
     local use_active = hl.get_config("dwindle.use_active_for_splits")
     local function focus(w)
-        hl.dispatch(hl.dsp.focus({ window = w }))
+        hl.dispatch(hl.dsp.focus({
+            window = w
+        }))
     end
     local function split_ratio(w, ratio)
         focus(w)
@@ -349,12 +356,22 @@ local function arrange_workspace(weights)
     end
 
     local ok, err = pcall(function()
-        hl.config({ dwindle = { use_active_for_splits = true } })
+        hl.config({
+            dwindle = {
+                use_active_for_splits = true
+            }
+        })
         -- Retile only these windows; preselection forces every split onto one axis.
         for i = 1, n do
-            hl.dispatch(hl.dsp.window.float({ window = list[i], action = "enable" }))
+            hl.dispatch(hl.dsp.window.float({
+                window = list[i],
+                action = "enable"
+            }))
         end
-        hl.dispatch(hl.dsp.window.float({ window = list[1], action = "disable" }))
+        hl.dispatch(hl.dsp.window.float({
+            window = list[1],
+            action = "disable"
+        }))
         local full_size = list[1].size[axis]
         local gap_cost, unit_size
         local function arrange(first, last)
@@ -366,7 +383,10 @@ local function arrange_workspace(weights)
             local left_count = middle - first
             focus(list[first])
             hl.dispatch(hl.dsp.layout("preselect " .. direction))
-            hl.dispatch(hl.dsp.window.float({ window = list[middle], action = "disable" }))
+            hl.dispatch(hl.dsp.window.float({
+                window = list[middle],
+                action = "disable"
+            }))
             if gap_cost == nil then
                 -- Every added divider consumes this much client space.
                 gap_cost = full_size - list[first].size[axis] - list[middle].size[axis]
@@ -385,10 +405,17 @@ local function arrange_workspace(weights)
     hl.dispatch(hl.dsp.layout("preselect none"))
     for i = 1, n do
         if list[i].floating then
-            hl.dispatch(hl.dsp.window.float({ window = list[i], action = "disable" }))
+            hl.dispatch(hl.dsp.window.float({
+                window = list[i],
+                action = "disable"
+            }))
         end
     end
-    hl.config({ dwindle = { use_active_for_splits = use_active } })
+    hl.config({
+        dwindle = {
+            use_active_for_splits = use_active
+        }
+    })
     if prev ~= nil then
         focus(prev)
     end
@@ -404,7 +431,7 @@ end
 
 -- With exactly three tiled windows, give the middle one half the client space.
 local function center_workspace()
-    arrange_workspace({ 1, 2, 1 })
+    arrange_workspace({1, 2, 1})
 end
 
 ------------------
