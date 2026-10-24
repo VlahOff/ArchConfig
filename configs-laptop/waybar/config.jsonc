@@ -16,8 +16,6 @@
         "cpu",
         "memory",
         "disk",
-        "disk#2",
-        "disk#3",
         "pulseaudio",
         "hyprland/language",
         "battery",
