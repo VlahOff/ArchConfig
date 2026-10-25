@@ -19,6 +19,7 @@
         "pulseaudio",
         "hyprland/language",
         "battery",
+        "custom/power-profile",
         "idle_inhibitor",
         "custom/dualsense-battery",
         "tray",
@@ -112,6 +113,14 @@
             "",
             ""
         ]
+    },
+    "custom/power-profile": {
+        "exec": "bash \"${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts/power-profile.sh\"",
+        "exec-if": "command -v powerprofilesctl >/dev/null 2>&1",
+        "return-type": "json",
+        "interval": 5,
+        "on-click": "bash \"${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts/power-profile.sh\" --cycle",
+        "exec-on-event": true
     },
     "network": {
         // "interface": "wlp2*", // (Optional) To force the use of this interface

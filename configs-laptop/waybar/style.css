@@ -86,6 +86,7 @@ button:hover {
 
 #clock,
 #battery,
+#custom-power-profile,
 #cpu,
 #memory,
 #disk,
@@ -139,6 +140,18 @@ label:focus {
 #idle_inhibitor.activated {
   background-color: #7a7c7e;
   color: #2d3436;
+}
+
+#custom-power-profile.performance {
+  color: #ffcc66;
+}
+
+#custom-power-profile.balanced {
+  color: #99ffdd;
+}
+
+#custom-power-profile.power-saver {
+  color: #9ece6a;
 }
 
 #tray > .passive {
