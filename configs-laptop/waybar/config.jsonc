@@ -104,6 +104,8 @@
         "format-charging": "   {capacity}%",
         "format-plugged": "   {capacity}%",
         "format-alt": "{icon}   {time}",
+        "format-alt-click": 3,
+        "on-click": "bash \"${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts/battery-threshold.sh\"",
         // "format-good": "", // An empty format will hide the module
         // "format-full": "",
         "format-icons": [
