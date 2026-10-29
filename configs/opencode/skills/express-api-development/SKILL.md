@@ -14,11 +14,3 @@ Derive the actor and ownership from authenticated server state; do not trust cli
 For cookie-authenticated mutations enforce the appropriate CSRF protection, including applicable auth/session endpoints. For a documented machine/webhook route use its designed authentication, payload and replay contract; never copy a bypass from another project or broaden an exception for convenience.
 
 Test through the real mounted app and existing harness. Cover allowed success, anonymous/invalid identity, forbidden role/grant/resource scope, malformed input and applicable CSRF/replay failure. Assert denied operations cause no business writes, change events or outbound delivery. Use isolated fixtures and mocked providers. Run the repository's actual focused and completion commands and formatting checks; do not assume Node's test runner or a fixed test glob.
-
-## Execution rules
-
-- Follow the user's task and current repository instructions first. Discover applicable `AGENTS.md`, style guides, architecture docs, protected files and package scripts; respect their exclusions throughout reads, searches, formatting, diffs and staging.
-- Complete work in the main agent by default. Loading a skill does not mean spawning an agent. Delegate only a necessary, bounded task; allow at most one active subagent, wait for completion, use the same configured local model, and never delegate recursively from a subagent.
-- Keep scope small and reuse the installed stack. Load only relevant skills/resources. Do not require a full lifecycle, repeated review agents, or approval checkpoints for routine authorized work.
-- Discover actual source paths, module conventions, authentication and data ownership. Do not import another project's roles, business rules, endpoint exceptions, test commands or directory layout.
-- Use actual repository commands and available tools. Report checks and limitations honestly; never claim browser verification from static checks alone.

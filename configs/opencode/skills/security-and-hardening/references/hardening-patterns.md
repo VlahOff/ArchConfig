@@ -63,23 +63,46 @@ const clean = DOMPurify.sanitize(userInput);
 
 ### Broken Access Control
 
+This owner-only title edit illustrates a Mongoose-backed service. `Task`, `authenticate` and `csrfProtection` represent the project's existing model and middleware. Adapt the ownership policy, identifiers, validation and projection to the actual repository; do not introduce a new persistence or auth stack.
+
 ```typescript
-// Always check authorization, not just authentication
-app.patch('/api/tasks/:id', authenticate, async (req, res) => {
-  const task = await taskService.findById(req.params.id);
+import { z } from 'zod';
 
-  // Check that the authenticated user owns this resource
-  if (task.ownerId !== req.user.id) {
-    return res.status(403).json({
-      error: { code: 'FORBIDDEN', message: 'Not authorized to modify this task' }
-    });
+const TaskTitlePatchSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+}).strict(); // Reject ownerId, roles, internal flags and other unknown fields.
+
+// In the existing service layer: authorize and update in one atomic operation.
+async function updateOwnedTaskTitle(taskId: string, actorId: string, title: string) {
+  return Task.findOneAndUpdate(
+    { _id: taskId, ownerId: actorId },
+    { $set: { title } },
+    { new: true, runValidators: true, upsert: false },
+  ).select('_id title').lean();
+}
+
+app.patch('/api/tasks/:id', authenticate, csrfProtection, async (req, res, next) => {
+  try {
+    if (!/^[a-f0-9]{24}$/i.test(req.params.id)) {
+      return res.status(400).json({ error: { code: 'INVALID_ID', message: 'Invalid task ID' } });
+    }
+    const result = TaskTitlePatchSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(422).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid input' } });
+    }
+    const updated = await updateOwnedTaskTitle(req.params.id, req.user.id, result.data.title);
+    if (!updated) {
+      // Missing and foreign-owned records have the same non-disclosing response.
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Task not found' } });
+    }
+    return res.json(updated);
+  } catch (error) {
+    return next(error);
   }
-
-  // Proceed with update
-  const updated = await taskService.update(req.params.id, req.body);
-  return res.json(updated);
 });
 ```
+
+An earlier read is not authority for a later write: the ownership predicate must still match when the database applies the update. Add any other current actor/resource constraints to that same predicate. Preserve the repository's validation and update-hook requirements; do not enable upsert on this path.
 
 ### Security Misconfiguration
 
@@ -109,16 +132,17 @@ app.use(cors({
 ### Sensitive Data Exposure
 
 ```typescript
-// Never return sensitive fields in API responses
+// Select the fields this endpoint is explicitly allowed to expose.
 function sanitizeUser(user: UserRecord): PublicUser {
-  const { passwordHash, resetToken, ...publicFields } = user;
-  return publicFields;
+  return { id: user.id, name: user.name };
 }
 
 // Use environment variables for secrets
 const API_KEY = process.env.STRIPE_API_KEY;
 if (!API_KEY) throw new Error('STRIPE_API_KEY not configured');
 ```
+
+Choose the public fields for the actual endpoint. A TypeScript return type does not remove runtime properties; returning a rest object would expose any newly added secret fields.
 
 ### Server-Side Request Forgery (SSRF)
 
@@ -161,7 +185,7 @@ The `range() !== 'unicast'` check covers loopback, link-local `169.254.169.254` 
 import { z } from 'zod';
 
 const CreateTaskSchema = z.object({
-  title: z.string().min(1).max(200).trim(),
+  title: z.string().trim().min(1).max(200),
   description: z.string().max(2000).optional(),
   priority: z.enum(['low', 'medium', 'high']).default('medium'),
   dueDate: z.string().datetime().optional(),

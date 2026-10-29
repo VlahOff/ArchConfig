@@ -21,11 +21,3 @@ Read current repository instructions, owning manifest/lockfile, Vite and lint co
 ## Verify
 
 Run the owning package's configured formatter, lint/build and relevant tests from the correct directory. Discover scripts; do not invent a root/client test command. Inspect actual desktop/mobile browser output for visible changes, using `multilingual-browser-qa` when languages are affected. A Vite build alone does not verify layout or session behavior.
-
-## Execution rules
-
-- Follow the user's task and current repository instructions first. Discover applicable `AGENTS.md`, style guides, architecture docs, protected files and package scripts; respect their exclusions throughout reads, searches, formatting, diffs and staging.
-- Complete work in the main agent by default. Loading a skill does not mean spawning an agent. Delegate only a necessary, bounded task; allow at most one active subagent, wait for completion, use the same configured local model, and never delegate recursively from a subagent.
-- Keep scope small and reuse the installed stack. Load only relevant skills/resources. Do not require a full lifecycle, repeated review agents, or approval checkpoints for routine authorized work.
-- Discover actual source paths, module conventions, authentication and data ownership. Do not import another project's roles, business rules, endpoint exceptions, test commands or directory layout.
-- Use actual repository commands and available tools. Report checks and limitations honestly; never claim browser verification from static checks alone.

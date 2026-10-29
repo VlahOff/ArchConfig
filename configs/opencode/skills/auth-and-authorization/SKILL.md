@@ -21,11 +21,3 @@ Read route mounting, auth/session middleware, account/token services, current ac
 ## Verify
 
 Test through the real mounted routes: allowed success, invalid/expired/revoked identity, forbidden capability/scope, foreign IDs and changed authorization during an existing session. For applicable CSRF failures use a writable actor and valid payload so a role denial cannot hide a missing CSRF guard. Test the chosen CSRF scheme's missing/forged/wrong-context cases and assert zero forbidden writes/outbound actions. For bearer/machine auth test its own credential and replay boundaries. Add relevant frontend session/cross-tab checks and distinguish local evidence from deployed HTTPS/cross-origin behavior.
-
-## Execution rules
-
-- Follow the user's task and current repository instructions first. Discover applicable `AGENTS.md`, style guides, architecture docs, protected files and package scripts; respect their exclusions throughout reads, searches, formatting, diffs and staging.
-- Complete work in the main agent by default. Loading a skill does not mean spawning an agent. Delegate only a necessary, bounded task; allow at most one active subagent, wait for completion, use the same configured local model, and never delegate recursively from a subagent.
-- Keep scope small and reuse the installed stack. Load only relevant skills/resources. Do not require a full lifecycle, repeated review agents, or approval checkpoints for routine authorized work.
-- Discover actual source paths, module conventions, authentication and data ownership. Do not import another project's roles, business rules, endpoint exceptions, test commands or directory layout.
-- Use actual repository commands and available tools. Report checks and limitations honestly; never claim browser verification from static checks alone.

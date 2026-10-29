@@ -14,11 +14,3 @@ description: Challenge high-risk assumptions or nontrivial security, data-integr
 Use one independent reviewer only when it is necessary for a concrete unresolved risk or explicitly requested. Give that reviewer the artifact and contract, not the desired verdict. Wait for completion before further delegation. Never require a reviewer per decision, cross-model escalation, or nested agents. Label self-review accurately; it is not an independent fresh-context review.
 
 Output: claim, counterexample investigated, evidence, resolution and remaining uncertainty. Skip for cosmetic edits with no material behavioral uncertainty.
-
-## Execution rules
-
-- Follow the user's task and current repository instructions first. Discover applicable `AGENTS.md`, style guides, architecture docs, protected files and package scripts; respect their exclusions throughout reads, searches, formatting, diffs and staging.
-- Complete work in the main agent by default. Loading a skill does not mean spawning an agent. Delegate only a necessary, bounded task; allow at most one active subagent, wait for completion, use the same configured local model, and never delegate recursively from a subagent.
-- Keep scope small and reuse the installed stack. Load only relevant skills/resources. Do not require a full lifecycle, repeated review agents, or approval checkpoints for routine authorized work.
-- Discover actual source paths, module conventions, authentication and data ownership. Do not import another project's roles, business rules, endpoint exceptions, test commands or directory layout.
-- Use actual repository commands and available tools. Report checks and limitations honestly; never claim browser verification from static checks alone.

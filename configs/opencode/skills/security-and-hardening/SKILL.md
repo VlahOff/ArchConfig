@@ -14,11 +14,3 @@ Use the established session/cookie/CSRF pipeline. Never weaken a guard to fix a 
 Inspect package audit results with installed versions, reachability, fix impact and the real advisory; do not run force upgrades blindly. Development fixture values are not evidence of reused production secrets; verify exposure before asserting it. Reuse existing test mocks for outbound mail/provider calls.
 
 For deeper controls read [hardening-patterns.md](references/hardening-patterns.md) and [security-checklist.md](references/security-checklist.md). Validate through the real mount: authorized success, anonymous denial, forbidden grant/scope/role, malformed input, applicable mutation CSRF rejection and zero forbidden side effects. For any explicitly documented machine/webhook endpoint, test its own authentication and replay contract without weakening cookie-authenticated routes. Report concrete findings and tested limits, not hypothetical certification.
-
-## Execution rules
-
-- Follow the user's task and current repository instructions first. Discover applicable `AGENTS.md`, style guides, architecture docs, protected files and package scripts; respect their exclusions throughout reads, searches, formatting, diffs and staging.
-- Complete work in the main agent by default. Loading a skill does not mean spawning an agent. Delegate only a necessary, bounded task; allow at most one active subagent, wait for completion, use the same configured local model, and never delegate recursively from a subagent.
-- Keep scope small and reuse the installed stack. Load only relevant skills/resources. Do not require a full lifecycle, repeated review agents, or approval checkpoints for routine authorized work.
-- Discover actual source paths, module conventions, authentication and data ownership. Do not import another project's roles, business rules, endpoint exceptions, test commands or directory layout.
-- Use actual repository commands and available tools. Report checks and limitations honestly; never claim browser verification from static checks alone.
