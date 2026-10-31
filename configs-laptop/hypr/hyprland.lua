@@ -608,6 +608,13 @@ hl.window_rule({
     },
     suppress_event = "maximize"
 })
+-- Keep Brave video fullscreen in SDR while allowing AutoHDR in other apps.
+hl.window_rule({
+    match = {
+        class = "^brave-browser$"
+    },
+    no_auto_hdr = true
+})
 hl.window_rule({
     match = {
         title = "^Calculator$"
