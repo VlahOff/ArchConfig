@@ -164,7 +164,7 @@ install_flatpak_with_retry() {
 	while true; do
 		for attempt in 1 2 3; do
 			echo "Installing $app (attempt $attempt/3)..."
-			if flatpak install --user --or-update -y flathub "$app"; then
+			if sudo flatpak install --or-update -y flathub "$app"; then
 				printf '%s\n' "$app" >>"$STATE_DIR/flatpak-completed"
 				return 0
 			else
@@ -964,7 +964,7 @@ stage_aur() {
 
 stage_flatpak() {
 	# ---------- Flatpak ----------
-	flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+	sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 	local -a apps=(
 		io.github.ebonjaeger.bluejay

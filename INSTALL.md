@@ -41,6 +41,12 @@ are skipped. To apply just this stage after updating the installer:
 ./install-archV6.sh --from grub
 ```
 
+Flathub and Flatpak apps are installed using `sudo` and Flatpak's default
+system-wide installation, making the apps available to all users.
+If you previously ran the per-user version,
+run `./install-archV6.sh --from flatpak` to clear saved Flatpak progress and install
+the selected profile system-wide. Existing per-user installations are left in place.
+
 Each Flatpak is installed separately, with up to three attempts and a five-second
 delay between attempts. After repeated failure, choose **r** to retry, **s** to
 skip that app and continue, or **q** to stop and resume later. Skipped apps are

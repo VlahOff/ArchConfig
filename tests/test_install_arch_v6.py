@@ -252,7 +252,10 @@ enable_multilib
                 (self.repo / profile / item).mkdir(parents=True, exist_ok=True)
         return r'''
 audit_log() { printf '%s\n' "$*" >> "$AUDIT_ROOT/commands"; }
-sudo() { audit_log sudo "$@"; }
+sudo() {
+    audit_log sudo "$@"
+    if [[ "$1" == flatpak ]]; then "$@"; fi
+}
 pacman-conf() { printf 'https://fixture.example.org\n'; }
 pacman() {
     case "$1" in
@@ -296,7 +299,16 @@ git() { echo 'Unexpected Git operation' >&2; exit 45; }
                 self.assertLess(calls.index("sudo ufw allow 53317"), calls.index("sudo ufw enable"))
                 self.assertEqual("sudo ufw limit 22/tcp" in calls, full)
                 self.assertEqual("appimages" in calls, full)
+                self.assertIn(
+                    "sudo flatpak remote-add --if-not-exists flathub "
+                    "https://flathub.org/repo/flathub.flatpakrepo",
+                    calls,
+                )
                 installs = [c for c in calls if c.startswith("flatpak install ")]
+                for install in installs:
+                    self.assertNotIn("--system", install.split())
+                    self.assertNotIn("--user", install.split())
+                    self.assertIn("sudo " + install, calls)
                 installed_apps = [c.split()[-1] for c in installs]
                 self.assertIn("org.localsend.localsend_app", installed_apps)
                 self.assertEqual("com.discordapp.Discord" in installed_apps, full)
@@ -471,6 +483,7 @@ sudo() {
     if [[ "$*" == 'systemctl enable --now bluetooth.service' && -f "$AUDIT_ROOT/fail-service" ]]; then
         return 23
     fi
+    if [[ "$1" == flatpak ]]; then "$@"; fi
 }
 '''
         failure = self.root / "fail-service"
@@ -511,7 +524,10 @@ flatpak() {
         completed = (state / "flatpak-completed").read_text().splitlines()
         self.assertIn("org.localsend.localsend_app", completed)
         self.assertEqual((state / "flatpak-profile").read_text(), "full\n")
-        self.assertEqual(sum(c.endswith("com.anydesk.Anydesk") for c in self.calls()), 3)
+        self.assertEqual(
+            sum(c.startswith("flatpak install ") and c.endswith("com.anydesk.Anydesk") for c in self.calls()),
+            3,
+        )
         self.assertEqual(self.calls().count("sleep 5"), 2)
         self.assertNotIn("shell-setup", self.calls())
         self.assertFalse(any(c.startswith("sudo pacman ") for c in self.calls()))
