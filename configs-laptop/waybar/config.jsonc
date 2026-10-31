@@ -165,6 +165,6 @@
     },
     "custom/wlogout": {
         "format": "",
-        "on-click": "wlogout"
+        "on-click": "~/.config/wlogout/launch.py"
     }
 }

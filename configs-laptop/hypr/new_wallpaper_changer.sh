@@ -7,7 +7,7 @@ IMAGE_DIR="${IMAGE_DIR:-/home/vlahoff/Pictures/superUltraWide}"
 INTERVAL="${INTERVAL:-600}"
 DPMS_POLL_INTERVAL="${DPMS_POLL_INTERVAL:-5}"
 
-for required_command in hyprpaper hyprctl shuf find awk readlink; do
+for required_command in hyprpaper hyprctl shuf find awk flock; do
   if ! command -v "$required_command" >/dev/null 2>&1; then
     echo "Error: $required_command not found"
     exit 1
@@ -34,105 +34,23 @@ if [[ ! -d "$IMAGE_DIR" ]]; then
   exit 1
 fi
 
-# Kill any older instances of this same script before continuing.
-# This uses both a pidfile and a /proc scan, so it works whether the old
-# copy was started as ./script.sh, /full/path/script.sh, or bash script.sh.
-SCRIPT_PATH="$(readlink -f -- "$0")"
+# Keep one slideshow per Hyprland session; config reloads reuse the running one.
+# Never remove this file: another process could otherwise lock a different inode.
 APP_ID="hyprpaper_wallpaper_changer"
 STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}"
-PID_FILE="$STATE_DIR/${APP_ID}.${UID}.pid"
-
-kill_old_pids() {
-  local pids=("$@")
-  ((${#pids[@]} == 0)) && return 0
-
-  echo "Killing older instance(s): ${pids[*]}"
-  kill "${pids[@]}" 2>/dev/null || true
-
-  for _ in {1..20}; do
-    local still_running=()
-    for pid in "${pids[@]}"; do
-      if kill -0 "$pid" 2>/dev/null; then
-        still_running+=("$pid")
-      fi
-    done
-
-    ((${#still_running[@]} == 0)) && return 0
-    pids=("${still_running[@]}")
-    sleep 0.1
-  done
-
-  kill -9 "${pids[@]}" 2>/dev/null || true
-}
-
-process_runs_this_script() {
-  local pid="$1"
-  local proc="/proc/$pid"
-  local arg cwd candidate resolved
-
-  [[ "$pid" =~ ^[0-9]+$ ]] || return 1
-  [[ -r "$proc/cmdline" ]] || return 1
-
-  cwd="$(readlink -f -- "$proc/cwd" 2>/dev/null || true)"
-  [[ -n "$cwd" ]] || return 1
-
-  while IFS= read -r -d '' arg; do
-    [[ -z "$arg" ]] && continue
-
-    if [[ "$arg" == /* ]]; then
-      candidate="$arg"
-    else
-      candidate="$cwd/$arg"
-    fi
-
-    resolved="$(readlink -f -- "$candidate" 2>/dev/null || true)"
-    [[ "$resolved" == "$SCRIPT_PATH" ]] && return 0
-  done <"$proc/cmdline"
-
-  return 1
-}
-
-find_same_script_pids() {
-  local proc pid
-
-  for proc in /proc/[0-9]*; do
-    pid="${proc#/proc/}"
-
-    # Do not kill this script or the shell that launched it.
-    [[ "$pid" == "$$" || "$pid" == "$PPID" ]] && continue
-    process_runs_this_script "$pid" && echo "$pid"
-  done
-}
-
-# Kill the PID recorded by the previous run only if it still belongs to this
-# script. This avoids killing an unrelated process after PID reuse.
-if [[ -f "$PID_FILE" ]]; then
-  old_pid="$(cat "$PID_FILE" 2>/dev/null || true)"
-  if [[ "$old_pid" != "$$" ]] && process_runs_this_script "$old_pid"; then
-    kill_old_pids "$old_pid"
-  fi
-fi
-
-# Also kill matching instances that were started before this pidfile logic existed.
-mapfile -t OLD_PIDS < <(find_same_script_pids)
-kill_old_pids "${OLD_PIDS[@]}"
-
-printf '%s\n' "$$" >"$PID_FILE"
-cleanup_pidfile() {
-  if [[ -f "$PID_FILE" ]] && [[ "$(cat "$PID_FILE" 2>/dev/null || true)" == "$$" ]]; then
-    rm -f "$PID_FILE"
-  fi
-}
-terminate() {
+LOCK_FILE="$STATE_DIR/${APP_ID}.${UID}.${HYPRLAND_INSTANCE_SIGNATURE}.lock"
+exec 9>>"$LOCK_FILE"
+if ! flock --nonblock 9; then
+  echo "Wallpaper changer is already running for this Hyprland session."
   exit 0
-}
-trap cleanup_pidfile EXIT
-trap terminate INT TERM
+fi
+trap 'exit 0' INT TERM
 
 # Querying the IPC is more reliable than pgrep when the same user has more than
 # one Hyprland session.
 if ! hyprctl hyprpaper listactive >/dev/null 2>&1; then
-  hyprpaper &
+  # The daemon must not keep the slideshow lock after this script exits.
+  hyprpaper 9>&- &
   hyprpaper_ready=0
   for _ in {1..20}; do
     if hyprctl hyprpaper listactive >/dev/null 2>&1; then
@@ -207,8 +125,7 @@ sleep_active_interval() {
   done
 }
 
-# Refresh this list before each change so hot-plugged and removed monitors do
-# not leave stale names behind.
+# Require an active output before changing images; Hyprpaper handles matching.
 refresh_monitors() {
   local monitor_output
 
@@ -242,18 +159,11 @@ while true; do
     wait_until_displays_awake
     wait_for_monitors
 
-    wallpaper_was_set=0
-    for m in "${MONITORS[@]}"; do
-      if hyprctl hyprpaper wallpaper "${m}, ${img}, cover" >/dev/null 2>&1; then
-        wallpaper_was_set=1
-      else
-        echo "Warning: could not set '$img' on monitor '$m'." >&2
-      fi
-    done
-
-    if ((wallpaper_was_set)); then
+    # New and reconnected outputs inherit this image without waiting for rotation.
+    if hyprctl hyprpaper wallpaper ", ${img}, cover" >/dev/null 2>&1; then
       sleep_active_interval
     else
+      echo "Warning: could not set '$img' as the fallback wallpaper." >&2
       sleep "$DPMS_POLL_INTERVAL"
     fi
   done
