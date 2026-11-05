@@ -40,11 +40,11 @@ local mainMod = "SUPER"
 
 local function restart_waybar()
     hl.exec_cmd("pkill waybar; waybar")
-    hl.exec_cmd("~/.config/hypr/new_wallpaper_changer.sh")
 end
 
 hl.on("hyprland.start", function()
     restart_waybar()
+    hl.exec_cmd("hyprpaper")
     hl.exec_cmd(
         "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE")
     hl.exec_cmd("systemctl --user start hyprland-session.target")
@@ -87,8 +87,8 @@ hl.env("XDG_SESSION_TYPE", "wayland")
 
 hl.config({
     general = {
-        gaps_in = 4,
-        gaps_out = 6,
+        gaps_in = 0, -- 4,
+        gaps_out = 0, -- 6,
         border_size = 2,
         col = {
             active_border = "rgba(ff8000fd)",
@@ -99,7 +99,7 @@ hl.config({
         allow_tearing = false
     },
     decoration = {
-        rounding = 4,
+        rounding = 0, -- 4,
         blur = {
             enabled = true,
             size = 3,
@@ -584,8 +584,7 @@ hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), {
 -- Screenshot / clipboard / color picker controls.
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd(
     [[sh -c 'mkdir -p ~/Pictures/Screenshots && img=$(slurp) && grim -g "$img" ~/Pictures/Screenshots/$(date +%F_%H%M%S).png && grim -g "$img" - | wl-copy -t image/png']]))
-hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(
-    [[bash -o pipefail -c '
+hl.bind(mainMod .. " + T", hl.dsp.exec_cmd([[bash -o pipefail -c '
         region=$(slurp) || exit
         [ -n "$region" ] || exit 0
         text=$(grim -g "$region" -t png - | tesseract stdin stdout -l eng+bul) || exit
