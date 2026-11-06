@@ -508,6 +508,7 @@ install_nvm_node_and_global_tools() {
 		eslint
 		typescript
 		http-server
+		@trailhq/trail-code
 	)
 
 	if [[ -s "$nvm_dir/nvm.sh" ]]; then
