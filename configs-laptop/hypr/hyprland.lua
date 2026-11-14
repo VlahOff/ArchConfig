@@ -69,8 +69,8 @@ hl.env("XDG_SESSION_TYPE", "wayland")
 
 hl.config({
     general = {
-        gaps_in = 4,
-        gaps_out = 6,
+        gaps_in = 0,
+        gaps_out = 0,
         border_size = 2,
         col = {
             active_border = "rgba(ff8000fd)",
@@ -81,7 +81,7 @@ hl.config({
         allow_tearing = false
     },
     decoration = {
-        rounding = 4,
+        rounding = 0,
         blur = {
             enabled = true,
             size = 3,
