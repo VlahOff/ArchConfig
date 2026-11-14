@@ -23,7 +23,8 @@
     "tps": true,
     "grouping": "auto",
     "markdown": "rendered",
-    "permissions": "prompt"
+    "permissions": "prompt",
+    "verbosity": "high"
   },
   "animations": true,
   "tabs": {
